@@ -1,27 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/login_page.dart';
+import '../pages/profile_page.dart';
 
-class NavBar extends StatelessWidget {
+class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
-  final bool isConnected; // <-- true si l'utilisateur est connecté
-  final String username; // nom de l'utilisateur
-  final String avatarUrl; // URL ou asset de l'avatar
-  final int notificationsCount;
-  final int favoritesCount;
-  final int cartCount;
 
-  NavBar({
-    this.onSearch,
-    this.isConnected = false,
-    this.username = '',
-    this.avatarUrl = '',
-    this.notificationsCount = 0,
-    this.favoritesCount = 0,
-    this.cartCount = 0,
-  });
+  const NavBar({super.key, this.onSearch});
+
+  @override
+  State<NavBar> createState() => _NavBarState();
+}
+
+class _NavBarState extends State<NavBar> {
+  final supabase = Supabase.instance.client;
+
+  bool isConnected = false;
+  String username = 'Utilisateur';
+  String avatarUrl =
+      'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg';
+
+  int notificationsCount = 0;
+  int favoritesCount = 0;
+  int cartCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+
+    supabase.auth.onAuthStateChange.listen((data) {
+      _loadUser();
+    });
+  }
+
+  Future<void> _loadUser() async {
+    final user = supabase.auth.currentUser;
+
+    if (user != null) {
+      try {
+        // Récupère les infos depuis la table "users"
+        final data =
+            await supabase.from('users').select().eq('id', user.id).single();
+
+        setState(() {
+          isConnected = true;
+          username = data['username'] ?? 'Utilisateur';
+          avatarUrl = data['avatar_url'] ?? avatarUrl;
+          notificationsCount = data['notifications_count'] ?? 0;
+          favoritesCount = data['favorites_count'] ?? 0;
+          cartCount = data['cart_count'] ?? 0;
+        });
+      } catch (e) {
+        // Si problème avec la table users, on met des valeurs par défaut
+        setState(() {
+          isConnected = true;
+          username = user.email?.split('@').first ?? 'Utilisateur';
+          avatarUrl = avatarUrl;
+          notificationsCount = 0;
+          favoritesCount = 0;
+          cartCount = 0;
+        });
+      }
+    } else {
+      setState(() {
+        isConnected = false;
+      });
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
+    final isConnected = supabase.auth.currentUser != null;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -33,110 +85,32 @@ class NavBar extends StatelessWidget {
           ],
         ),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 35, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ===== 1er étage : Logo + Connexion / Profil =====
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  // Logo à gauche
                   Image.asset('assets/images/logo.png', width: 38, height: 38),
-                  SizedBox(width: 8),
-                  // Texte PeeMart
-                  Text(
+                  const SizedBox(width: 8),
+                  const Text(
                     'PeeMart',
-                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Swansea',
                       fontSize: 28,
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      height: 1.2,
                     ),
                   ),
                 ],
               ),
-
-              // ===== À droite : bouton Connexion ou profil connecté =====
-              isConnected
-                  ? Row(
-                    children: [
-                      // ⚡ Icônes à gauche
-                      _iconWithBadge(
-                        icon: Icons.notifications,
-                        count: notificationsCount,
-                        onPressed: () {},
-                      ),
-                      const SizedBox(width: 8),
-                      _iconWithBadge(
-                        icon: Icons.favorite,
-                        count: favoritesCount,
-                        onPressed: () {},
-                      ),
-                      const SizedBox(width: 8),
-                      _iconWithBadge(
-                        icon: Icons.shopping_cart,
-                        count: cartCount,
-                        onPressed: () {},
-                      ),
-                      const SizedBox(width: 16),
-                      // ⚡ Profil à droite
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundImage:
-                            avatarUrl.isNotEmpty
-                                ? NetworkImage(avatarUrl)
-                                : AssetImage('assets/images/logo.png')
-                                    as ImageProvider,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        username,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                        ),
-                      ),
-                    ],
-                  )
-                  : ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                    ),
-                    icon: const Icon(
-                      Icons.person,
-                      color: Color.fromARGB(255, 0, 2, 105),
-                      size: 20,
-                    ),
-                    label: const Text(
-                      'Connexion',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 0, 2, 105),
-                        fontWeight: FontWeight.bold,
-                        height: 1.2,
-                      ),
-                    ),
-                  ),
+              isConnected ? _connectedUI() : _loginButton(),
             ],
           ),
-
-          SizedBox(height: 20),
-
-          // ===== 2ème étage : Navigation =====
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -147,76 +121,111 @@ class NavBar extends StatelessWidget {
               _navButton('Concours'),
             ],
           ),
-
-          SizedBox(height: 15),
-
-          // ===== 3ème étage : Barre de recherche =====
+          const SizedBox(height: 15),
           SizedBox(
             width: double.infinity,
             child: TextField(
-              onSubmitted: (value) {
-                if (onSearch != null) onSearch!(value);
-              },
-              decoration: InputDecoration(
+              onSubmitted: widget.onSearch,
+              decoration: const InputDecoration(
                 hintText: 'Rechercher un produit ou une boutique...',
                 prefixIcon: Icon(Icons.search),
                 fillColor: Colors.white,
                 filled: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-          SizedBox(height: 12),
         ],
       ),
     );
   }
 
-  // ===== Fonction boutons de navigation =====
+  Widget _connectedUI() {
+    return Row(
+      children: [
+        _iconWithBadge(Icons.notifications, notificationsCount),
+        _iconWithBadge(Icons.favorite, favoritesCount),
+        _iconWithBadge(Icons.shopping_cart, cartCount),
+        const SizedBox(width: 16),
+        GestureDetector(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfilePage()),
+    );
+  },
+  child: Row(
+    children: [
+      CircleAvatar(
+        radius: 22,
+        backgroundImage: NetworkImage(avatarUrl),
+      ),
+      const SizedBox(width: 8),
+      Text(
+        username,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+          height: 1.2,
+        ),
+      ),
+    ],
+  ),
+),
+
+        
+      ],
+    );
+  }
+
+  Widget _loginButton() {
+    return ElevatedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      },
+      icon: const Icon(Icons.person, color: Color.fromARGB(255, 0, 2, 105)),
+      label: const Text(
+        'Connexion',
+        style: TextStyle(
+          color: Color.fromARGB(255, 0, 2, 105),
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+    );
+  }
+
   Widget _navButton(String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: TextButton(
-        onPressed: () {
-          // TODO: Navigate to page correspondante
-        },
-        child: Text(title, style: TextStyle(fontSize: 16, color: Colors.white)),
+        onPressed: () {},
+        child: Text(title, style: const TextStyle(color: Colors.white , fontSize: 18)),
       ),
     );
   }
 
-  // ===== Fonction pour icône avec badge =====
-  Widget _iconWithBadge({
-    required IconData icon,
-    required int count,
-    required VoidCallback onPressed,
-  }) {
+  Widget _iconWithBadge(IconData icon, int count) {
     return Stack(
       children: [
-        IconButton(onPressed: onPressed, icon: Icon(icon, color: Colors.white)),
+        IconButton(icon: Icon(icon, color: Colors.white), onPressed: () {}),
         if (count > 0)
           Positioned(
             right: 4,
             top: 4,
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 255, 10, 88),
-                shape: BoxShape.circle,
-              ),
-              constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+            child: CircleAvatar(
+              radius: 8,
+              backgroundColor: const Color.fromARGB(255, 255, 10, 88),
               child: Text(
                 '$count',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 10, color: Colors.white),
               ),
             ),
           ),

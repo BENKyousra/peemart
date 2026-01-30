@@ -1,77 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
-import 'widgets/navbar.dart';
-import 'pages/login_page.dart'; 
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-void main() async {
+import 'auth/auth_gate.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.web,
+
+  await Supabase.initialize(
+    url: 'https://rsymjvtwfxkevpqzgytb.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJzeW1qdnR3ZnhrZXZwcXpneXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk0NjMwODEsImV4cCI6MjA4NTAzOTA4MX0.ozca8-zqUuaRhgUj9LrBlTfgbwoyQ-Ey9uLX4gCZYc8',
   );
 
-  runApp(const PeeMartApp());
+  runApp(const MyApp());
 }
 
-class PeeMartApp extends StatelessWidget {
-  const PeeMartApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'PeeMart',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: 'Swansea'),
-
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          // ⏳ Chargement
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          // ❌ PAS CONNECTÉ → LOGIN
-          if (!snapshot.hasData) {
-            return const LoginPage();
-          }
-
-          // ✅ CONNECTÉ → HOME AVEC NAVBAR
-          final user = snapshot.data!;
-
-          return Scaffold(
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  NavBar(
-                    isConnected: true,
-                    username: user.email!.split('@')[0], // ex: test
-                    avatarUrl:
-                        'https://i.pravatar.cc/150?u=${user.uid}', // avatar auto
-                    notificationsCount: 3,
-                    favoritesCount: 5,
-                    cartCount: 2,
-                    onSearch: (query) {
-                      print('Recherche : $query');
-                    },
-                  ),
-
-                  const SizedBox(height: 50),
-                  const Center(
-                    child: Text(
-                      'Contenu du site PeeMart ici',
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+      theme: ThemeData(
+        fontFamily: 'Swansea',
+        useMaterial3: true,
       ),
+      home: const AuthGate(),
     );
   }
 }
