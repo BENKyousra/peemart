@@ -130,55 +130,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   username: username,
                   email: email,
                   isSeller: isSeller,
-                  favorites: [
-                    {
-                      'title': 'Sac à dos',
-                      'image_url':
-                          'https://images.pexels.com/photos/15271715/pexels-photo-15271715.jpeg?_gl=1*1bjmyyf*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNzM3JGoyOSRsMCRoMA..',
-                    },
-                    { 
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/2587370/pexels-photo-2587370.jpeg?_gl=1*asgoch*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNTA3JGo0OSRsMCRoMA..',
-                    },
-                    {
-                      'title': 'Sac à dos',
-                      'image_url':
-                          'https://images.pexels.com/photos/27596308/pexels-photo-27596308.jpeg?_gl=1*deiple*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUzMTI1JGozNiRsMCRoMA..',
-                    },
-                    { 
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/2688992/pexels-photo-2688992.jpeg?_gl=1*1b4lb4x*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNTM1JGoyMSRsMCRoMA..',
-                    },
-                    { 
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/17545644/pexels-photo-17545644.jpeg?_gl=1*j0v2ol*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNTYxJGo2MCRsMCRoMA..',
-                    },
-                    { 
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/15271715/pexels-photo-15271715.jpeg?_gl=1*1bjmyyf*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNzM3JGoyOSRsMCRoMA..',
-                    },
-                    
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/46710/pexels-photo-46710.jpeg',
-                    },
-                    
-                  ],
+                  favorites: [],
                   updateField:
                       (field, value) => print('Mise à jour $field : $value'),
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'pages/home_page.dart';
 import 'auth/auth_gate.dart';
 
 Future<void> main() async {
@@ -27,7 +27,8 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Swansea',
         useMaterial3: true,
       ),
-      home: const AuthGate(),
+      // home: const AuthGate(),
+      home: const HomePage(),
     );
   }
 }
