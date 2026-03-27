@@ -6,20 +6,48 @@ class CommentService {
   final supabase = Supabase.instance.client;
 
   // 🔹 Récupérer tous les commentaires d'un produit
-  static Future<List<CommentModel>> fetchComments(String productId) async {
-    final response = await Supabase.instance.client
-        .from('comments')
-        .select('id, content, rating, created_at, user_id')
-        .eq('product_id', productId)
-        .order('created_at', ascending: false);
+ static Future<List<CommentModel>> fetchComments(String productId) async {
+  final supabase = Supabase.instance.client;
 
-    final data =
-        (response as List<dynamic>)
-            .map((e) => CommentModel.fromMap(e))
-            .toList();
+  final response = await supabase
+      .from('comments')
+      .select('id, content, rating, created_at, user_id')
+      .eq('product_id', productId)
+      .order('created_at', ascending: false);
 
-    return data;
+  final List data = response;
+
+  List<CommentModel> comments = [];
+
+  for (var e in data) {
+    String userId = e['user_id'];
+
+    String username = 'Utilisateur';
+
+    try {
+      final userRes = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', userId)
+          .single();
+
+      username = userRes['username'] ?? 'Utilisateur';
+    } catch (_) {
+      username = 'Utilisateur';
+    }
+
+    comments.add(CommentModel(
+      id: e['id'],
+      productId: productId,
+      name: username,
+      rating: (e['rating'] ?? 0),
+      content: e['content'] ?? '',
+      createdAt: DateTime.tryParse(e['created_at'] ?? '') ?? DateTime.now(),
+    ));
   }
+
+  return comments;
+}
 
   // 🔹 Ajouter un commentaire
   Future<void> addComment({
@@ -45,6 +73,16 @@ class CommentService {
       // afficher widget/snackbar pour utilisateur
     }
   }
+
+  Future<String> getUsername(String userId) async {
+  final res = await supabase
+      .from('users')
+      .select('username')
+      .eq('id', userId)
+      .single();
+
+  return res['username'] ?? 'Utilisateur';
+}
 
   // 🔹 Subscribe to comments (Realtime)
   Stream<List<CommentModel>> commentStream(String productId) {
