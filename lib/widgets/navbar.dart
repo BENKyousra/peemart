@@ -24,6 +24,8 @@ class _NavBarState extends State<NavBar> {
   int favoritesCount = 0;
   int cartCount = 0;
 
+  String currentPage = "Accueil";
+
   @override
   void initState() {
     super.initState();
@@ -33,6 +35,14 @@ class _NavBarState extends State<NavBar> {
       _loadUser();
     });
   }
+
+  final Map<String, String> routes = {
+  "Accueil": "/home",
+  // "Boutiques": "/boutiques",
+  // "Influenceurs": "/influenceurs",
+};
+
+
 
   Future<void> _loadUser() async {
     final user = supabase.auth.currentUser;
@@ -67,6 +77,7 @@ class _NavBarState extends State<NavBar> {
         isConnected = false;
       });
     }
+    
   }
 
 
@@ -202,15 +213,27 @@ class _NavBarState extends State<NavBar> {
     );
   }
 
-  Widget _navButton(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: TextButton(
-        onPressed: () {},
-        child: Text(title, style: const TextStyle(color: Colors.white , fontSize: 18)),
+Widget _navButton(String title) {
+  final currentRoute = ModalRoute.of(context)?.settings.name;
+  final isActive = currentRoute == routes[title];
+
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    child: TextButton(
+      onPressed: () {
+        Navigator.pushReplacementNamed(context, routes[title]!);
+      },
+      child: Text(
+        title,
+        style: TextStyle(
+          color: isActive ? Color.fromARGB(255, 0, 169, 191) : Colors.white,
+          fontSize: 19,
+          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _iconWithBadge(IconData icon, int count) {
     return Stack(

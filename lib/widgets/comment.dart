@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 
 class CommentWidget extends StatelessWidget {
+  final String id;
   final String name;
   final int rating;
   final String comment;
   final String date;
+  final bool isOwner;
+  final VoidCallback onDelete;
+  final VoidCallback onEdit;
 
   const CommentWidget({
     super.key,
+    required this.id,
     required this.name,
     required this.rating,
     required this.comment,
     required this.date,
+    required this.isOwner,
+    required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -29,7 +37,9 @@ class CommentWidget extends StatelessWidget {
           Row(
             children: [
               Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+
               const SizedBox(width: 10),
+
               Row(
                 children: List.generate(
                   5,
@@ -40,14 +50,29 @@ class CommentWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                date,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
-              ),
+
+              const Spacer(),
+
+              // 🔥 ACTIONS
+              if (isOwner) ...[
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 18),
+                  onPressed: onEdit,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                  onPressed: onDelete,
+                ),
+              ],
             ],
           ),
+
           const SizedBox(height: 6),
+
+          Text(date, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+
+          const SizedBox(height: 6),
+
           Text(comment),
         ],
       ),

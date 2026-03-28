@@ -146,6 +146,7 @@ class _ShopPageState extends State<ShopPage> {
 
                             rating:
                                 (product['rating'] as num?)?.toDouble() ?? 0,
+                            reviewCount: product['review_count'] ?? 0,
                           );
                         },
                       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../pages/product_detail_page.dart';
 import '../pages/shop_page.dart';
 
@@ -12,6 +13,8 @@ class ProductCard extends StatelessWidget {
   final double rating;
   final String shopId;
   final String productId;
+  final int reviewCount;
+  final VoidCallback? onRefresh;
 
   const ProductCard({
     super.key,
@@ -24,13 +27,15 @@ class ProductCard extends StatelessWidget {
     required this.rating,
     required this.shopId,
     required this.productId,
+    required this.reviewCount,
+    this.onRefresh,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder:
@@ -44,12 +49,14 @@ class ProductCard extends StatelessWidget {
                   shopId: shopId,
                   shopAvatar: shopAvatar,
                   rating: rating,
-                  description:
-                      "Ceci est une description du produit. "
-                      "Ici tu peux mettre tous les détails comme les sites e-commerce.",
+                  description: "Ceci est une description...",
                 ),
           ),
         );
+
+        if (result == true) {
+  onRefresh?.call(); // 🔥 propre
+}
       },
       child: Container(
         width: 240,
@@ -119,10 +126,12 @@ class ProductCard extends StatelessWidget {
                   Row(
                     children: [
                       _buildStars(rating),
+                      const SizedBox(width: 6),
+                      Text(rating.toStringAsFixed(1)),
                       const SizedBox(width: 4),
                       Text(
-                        rating.toString(),
-                        style: const TextStyle(fontSize: 12),
+                        "($reviewCount)",
+                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                       ),
                     ],
                   ),

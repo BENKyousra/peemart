@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'shop_page.dart';
 import '../widgets/comment.dart';
 import '../services/comment_service.dart';
@@ -38,16 +39,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   int selectedImage = 0;
   late List<String> allImages;
   final CommentService commentService = CommentService();
-
+  final currentUser = Supabase.instance.client.auth.currentUser;
   List<CommentModel> comments = [];
   bool isLoadingComments = true;
 
-  @override
-  void initState() {
-    super.initState();
-    allImages = widget.images.isNotEmpty ? widget.images : [widget.imageUrl];
-    fetchComments();
+ @override
+void initState() {
+  super.initState();
+
+  allImages = [];
+
+  // ✅ image principale en premier
+  if (widget.imageUrl.isNotEmpty) {
+    allImages.add(widget.imageUrl);
   }
+
+  // ✅ images galerie ensuite
+  if (widget.images.isNotEmpty) {
+    allImages.addAll(widget.images);
+  }
+
+  selectedImage = 0;
+
+  fetchComments();
+}
 
   Future<void> fetchComments() async {
     setState(() => isLoadingComments = true);
@@ -56,13 +71,19 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<void> handleAddComment(String text, int rating) async {
-    if (text.isEmpty || rating == 0) return;
-    await CommentService().addComment(
-      productId: widget.productId,
-      text: text,
-      rating: rating,
-    );
-    fetchComments();
+    try {
+      if (text.isEmpty || rating == 0) return;
+
+      await CommentService().addComment(
+        productId: widget.productId,
+        text: text,
+        rating: rating,
+      );
+
+      await fetchComments();
+    } catch (e) {
+      print("❌ ERREUR COMMENT: $e");
+    }
   }
 
   void _openImage(BuildContext context, String imageUrl) {
@@ -241,7 +262,15 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                           children: [
                             _buildStars(widget.rating),
                             const SizedBox(width: 6),
-                            Text(widget.rating.toString()),
+                            Text(widget.rating.toStringAsFixed(1)),
+                            const SizedBox(width: 4),
+                            Text(
+                              "(${comments.length})",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
                           ],
                         ),
 
@@ -356,16 +385,41 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   ? const CircularProgressIndicator()
                   : Column(
                     children:
-                        comments
-                            .map(
-                              (c) => CommentWidget(
-                                name: c.name,
-                                rating: c.rating,
-                                date: "${c.createdAt.toLocal()}".split(' ')[0],
-                                comment: c.content,
-                              ),
-                            )
-                            .toList(),
+                        comments.map((c) {
+                          return CommentWidget(
+                            id: c.id,
+                            name: c.name,
+                            rating: c.rating,
+                            date: "${c.createdAt.toLocal()}".split(' ')[0],
+                            comment: c.content,
+
+                            // 🔥 vérifier propriétaire
+                            isOwner: currentUser?.id == c.userId,
+
+                            onDelete: () async {
+                              await commentService.deleteComment(
+                                c.id,
+                                widget.productId,
+                              );
+                              fetchComments();
+                            },
+
+                            onEdit: () {
+                              showCommentDialog(
+                                context,
+                                onSend: (text, rating) async {
+                                  await commentService.updateComment(
+                                    commentId: c.id,
+                                    text: text,
+                                    rating: rating,
+                                    productId: widget.productId,
+                                  );
+                                  fetchComments();
+                                },
+                              );
+                            },
+                          );
+                        }).toList(),
                   ),
             ],
           ),
