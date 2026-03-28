@@ -16,9 +16,12 @@ class _NavBarState extends State<NavBar> {
   final supabase = Supabase.instance.client;
 
   bool isConnected = false;
+  bool _isLoading = true;
   String username = 'Utilisateur';
-  String avatarUrl =
-      'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg';
+  static const String defaultAvatar =
+      'https://res.cloudinary.com/diqymizc6/image/upload/v1/defaults/avatar.png';
+
+  String avatarUrl = defaultAvatar;
 
   int notificationsCount = 0;
   int favoritesCount = 0;
@@ -35,26 +38,43 @@ class _NavBarState extends State<NavBar> {
   }
 
   Future<void> _loadUser() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     final user = supabase.auth.currentUser;
 
     if (user != null) {
       try {
-        // Récupère les infos depuis la table "users"
         final data =
-            await supabase.from('users').select().eq('id', user.id).single();
+            await supabase
+                .from('profiles')
+                .select()
+                .eq('id', user.id)
+                .maybeSingle();
 
         setState(() {
           isConnected = true;
-          username = data['username'] ?? 'Utilisateur';
-          avatarUrl = data['avatar_url'] ?? avatarUrl;
-          notificationsCount = data['notifications_count'] ?? 0;
-          favoritesCount = data['favorites_count'] ?? 0;
-          cartCount = data['cart_count'] ?? 0;
+          _isLoading = false;
+
+          username =
+              data?['username'] ??
+              user.email?.split('@').first ??
+              'Utilisateur';
+          avatarUrl =
+              data?['avatar_url']?.toString().isNotEmpty == true
+                  ? data!['avatar_url']
+                  : defaultAvatar;
+
+          notificationsCount = data?['notifications_count'] ?? 0;
+          favoritesCount = data?['favorites_count'] ?? 0;
+          cartCount = data?['cart_count'] ?? 0;
         });
       } catch (e) {
-        // Si problème avec la table users, on met des valeurs par défaut
         setState(() {
           isConnected = true;
+          _isLoading = false;
+
           username = user.email?.split('@').first ?? 'Utilisateur';
           avatarUrl = avatarUrl;
           notificationsCount = 0;
@@ -65,15 +85,13 @@ class _NavBarState extends State<NavBar> {
     } else {
       setState(() {
         isConnected = false;
+        _isLoading = false;
       });
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
-    final isConnected = supabase.auth.currentUser != null;
-
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -107,7 +125,15 @@ class _NavBarState extends State<NavBar> {
                   ),
                 ],
               ),
-              isConnected ? _connectedUI() : _loginButton(),
+              _isLoading
+                  ? const SizedBox(
+                    width: 100,
+                    height: 40,
+                    child: CircularProgressIndicator(color: Colors.white),
+                  )
+                  : isConnected
+                  ? _connectedUI()
+                  : _loginButton(),
             ],
           ),
           const SizedBox(height: 20),
@@ -151,33 +177,33 @@ class _NavBarState extends State<NavBar> {
         _iconWithBadge(Icons.shopping_cart, cartCount),
         const SizedBox(width: 16),
         GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ProfilePage()),
-    );
-  },
-  child: Row(
-    children: [
-      CircleAvatar(
-        radius: 22,
-        backgroundImage: NetworkImage(avatarUrl),
-      ),
-      const SizedBox(width: 8),
-      Text(
-        username,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-          height: 1.2,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            ).then((_) {
+              _loadUser(); // 👈 يعيد تحميل avatar + username
+            });
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: NetworkImage(avatarUrl),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                username,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ],
-  ),
-),
-
-        
       ],
     );
   }
@@ -207,7 +233,10 @@ class _NavBarState extends State<NavBar> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: TextButton(
         onPressed: () {},
-        child: Text(title, style: const TextStyle(color: Colors.white , fontSize: 18)),
+        child: Text(
+          title,
+          style: const TextStyle(color: Colors.white, fontSize: 18),
+        ),
       ),
     );
   }

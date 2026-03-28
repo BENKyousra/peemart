@@ -30,101 +30,106 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-// LOGIN
-Future<void> _login() async {
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
+  void _navigateToHomePage() {
+    if (!mounted) return;
 
-  try {
-    final response = await supabase.auth.signInWithPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text.trim(),
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const HomePage()),
+      (_) => false,
     );
+  }
 
-    final user = response.user;
+  // LOGIN
+  Future<void> _login() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-    if (user != null) {
-      // Vérifie si user existe dans users table
-      final data = await supabase
-          .from('users')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
+    try {
+      final response = await supabase.auth.signInWithPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
 
-      if (data == null) {
-        // Ancien utilisateur → créer son enregistrement
+      final user = response.user;
+
+      if (user != null) {
+        // Vérifie si user existe dans users table
+        final data =
+            await supabase
+                .from('users')
+                .select()
+                .eq('id', user.id)
+                .maybeSingle();
+
+        if (data == null) {
+          // Ancien utilisateur → créer son enregistrement
+          await supabase.from('users').insert({
+            'id': user.id,
+            'username': user.email?.split('@').first ?? 'Utilisateur',
+            'email': user.email,
+            'avatar_url':
+                'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg',
+          });
+        }
+
+        if (!mounted) return;
+        _navigateToHomePage();
+      }
+    } on AuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // SIGNUP
+  Future<void> _signUp() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      final response = await supabase.auth.signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        data: {'username': _usernameController.text.trim()},
+      );
+
+      final user = response.user;
+      if (user != null) {
         await supabase.from('users').insert({
           'id': user.id,
-          'username': user.email?.split('@').first ?? 'Utilisateur',
-          'email': user.email,
+          'username': _usernameController.text.trim(),
+          'email': _emailController.text.trim(),
           'avatar_url':
               'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg',
         });
+
+        if (!mounted) return;
+        _navigateToHomePage();
       }
-
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (_) => false,
-      );
-    }
-  } on AuthException catch (e) {
-    setState(() {
-      _errorMessage = e.message;
-    });
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
-  }
-}
-
-// SIGNUP
-Future<void> _signUp() async {
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
-
-  try {
-    final response = await supabase.auth.signUp(
-  email: _emailController.text.trim(),
-  password: _passwordController.text.trim(),
-  data: {'username': _usernameController.text.trim()},
-);
-
-
-    final user = response.user;
-    if (user != null) {
-      await supabase.from('users').insert({
-        'id': user.id,
-        'username': _usernameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'avatar_url':
-            'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg',
+    } on AuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message;
       });
-
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
-        (_) => false,
-      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-  } on AuthException catch (e) {
-    setState(() {
-      _errorMessage = e.message;
-    });
-  } finally {
-    setState(() {
-      _isLoading = false;
-    });
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -273,21 +278,21 @@ Future<void> _signUp() async {
                           ),
                           style: const TextStyle(color: Colors.white),
                         ),
-                         const SizedBox(height: 6),
+                        const SizedBox(height: 6),
 
-                          // ===== Forgot password =====
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () {
-                                // TODO: mot de passe oublié
-                              },
-                              child: const Text(
-                                'Mot de passe oublié ?',
-                                style: TextStyle(color: Colors.white70),
-                              ),
+                        // ===== Forgot password =====
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              // TODO: mot de passe oublié
+                            },
+                            child: const Text(
+                              'Mot de passe oublié ?',
+                              style: TextStyle(color: Colors.white70),
                             ),
                           ),
+                        ),
 
                         const SizedBox(height: 12),
 

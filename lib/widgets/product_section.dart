@@ -74,19 +74,25 @@ class ProductSection extends StatelessWidget {
               itemBuilder: (context, index) {
                 final product = products[index];
 
+                final shop =
+                    (product['shops'] is List && product['shops'].isNotEmpty)
+                        ? product['shops'][0]
+                        : null;
+
                 return ProductCard(
-                  title: product['title'],
-                  imageUrl: product['image_url'],
-                  price:
-                      product['price'] is double
-                          ? product['price']
-                          : double.tryParse(product['price'].toString()) ?? 0.0,
-                  shopName: product['shop_name'],
-                  shopAvatar: product['shop_avatar'],
-                  rating:
-                      product['rating'] is double
-                          ? product['rating']
-                          : (product['rating'] as num).toDouble(),
+                  title: product['title'] ?? '',
+
+                  imageUrl:
+                      product['image_url'] ?? 'https://via.placeholder.com/300',
+
+                  price: (product['price'] ?? 0).toDouble(),
+
+                  shopName: shop?['name'] ?? 'Boutique inconnue',
+
+                  shopAvatar:
+                      shop?['avatar_url'] ?? 'https://via.placeholder.com/150',
+
+                  rating: (product['rating'] ?? 0).toDouble(),
                 );
               },
             ),

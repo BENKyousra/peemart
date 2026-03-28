@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'editable_field.dart';
@@ -11,6 +10,7 @@ class ProfileInfo extends StatefulWidget {
   final bool isSeller;
   final List<dynamic> favorites;
   final Function(String field, dynamic value) updateField;
+  final Function(XFile imageFile) onAvatarChanged;
 
   const ProfileInfo({
     super.key,
@@ -21,6 +21,7 @@ class ProfileInfo extends StatefulWidget {
     required this.isSeller,
     required this.favorites,
     required this.updateField,
+    required this.onAvatarChanged,
   });
 
   @override
@@ -38,7 +39,9 @@ class _ProfileInfoState extends State<ProfileInfo> {
       setState(() {
         localAvatarPath = image.path;
       });
-      // Ici tu peux appeler widget.updateField('avatar_url', ...) plus tard pour backend
+
+      // تمرير XFile مباشرة
+      widget.onAvatarChanged(image);
     }
   }
 
@@ -67,9 +70,12 @@ class _ProfileInfoState extends State<ProfileInfo> {
                         children: [
                           CircleAvatar(
                             radius: 50,
-                            backgroundImage: localAvatarPath != null
-                                ? FileImage(File(localAvatarPath!)) as ImageProvider
-                                : NetworkImage(widget.avatarUrl),
+                            backgroundImage:
+                                localAvatarPath != null
+                                    ? NetworkImage(
+                                      localAvatarPath!,
+                                    ) // Web لا يستخدم FileImage
+                                    : NetworkImage(widget.avatarUrl),
                           ),
                           Positioned(
                             bottom: 0,
@@ -151,64 +157,65 @@ class _ProfileInfoState extends State<ProfileInfo> {
                   widget.favorites.isEmpty
                       ? const Center(child: Text('Aucun favori'))
                       : GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 0.7,
-                          ),
-                          itemCount: widget.favorites.length,
-                          itemBuilder: (context, index) {
-                            final item = widget.favorites[index];
-                            return Card(
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: Stack(
-                                  children: [
-                                    Positioned.fill(
-                                      child: item['image_url'] != null
-                                          ? Image.network(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 12,
+                              crossAxisSpacing: 12,
+                              childAspectRatio: 0.7,
+                            ),
+                        itemCount: widget.favorites.length,
+                        itemBuilder: (context, index) {
+                          final item = widget.favorites[index];
+                          return Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child:
+                                        item['image_url'] != null
+                                            ? Image.network(
                                               item['image_url']!,
                                               fit: BoxFit.cover,
                                             )
-                                          : const Center(
+                                            : const Center(
                                               child: Icon(
                                                 Icons.image_not_supported,
                                               ),
                                             ),
-                                    ),
-                                    if (item['title'] != null)
-                                      Positioned(
-                                        bottom: 0,
-                                        left: 0,
-                                        right: 0,
-                                        child: Container(
-                                          color: Colors.black.withOpacity(0.5),
-                                          padding: const EdgeInsets.all(4),
-                                          child: Text(
-                                            item['title']!,
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                            softWrap: true,
+                                  ),
+                                  if (item['title'] != null)
+                                    Positioned(
+                                      bottom: 0,
+                                      left: 0,
+                                      right: 0,
+                                      child: Container(
+                                        color: Colors.black.withOpacity(0.5),
+                                        padding: const EdgeInsets.all(4),
+                                        child: Text(
+                                          item['title']!,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
                                           ),
+                                          textAlign: TextAlign.center,
+                                          softWrap: true,
                                         ),
                                       ),
-                                  ],
-                                ),
+                                    ),
+                                ],
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          );
+                        },
+                      ),
                 ],
               ),
             ),
