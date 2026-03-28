@@ -117,6 +117,8 @@ class _ProductsListPageState extends State<ProductsListPage> {
                     shopAvatar: product['shops']?['avatar'] ?? '',
                     shopId: product['shop_id'],
                     rating: (product['rating'] as num?)?.toDouble() ?? 0,
+                    reviewCount: product['review_count'] ?? 0,
+                    onRefresh: fetchProducts,
                   );
                 },
               ),

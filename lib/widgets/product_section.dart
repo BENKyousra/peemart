@@ -68,7 +68,7 @@ class ProductSection extends StatelessWidget {
 
           // ===== PRODUITS =====
           SizedBox(
-            height: 360,
+            height: 365,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -115,6 +115,8 @@ class ProductSection extends StatelessWidget {
                   shopId: product['shop_id'].toString(),
 
                   rating: (product['rating'] as num?)?.toDouble() ?? 0,
+                  reviewCount: product['review_count'] ?? 0,
+                  
                 );
               },
             ),

@@ -5,6 +5,7 @@ class CommentModel {
   final int rating;
   final String content;
   final DateTime createdAt;
+  final String userId;
 
   CommentModel({
     required this.id,
@@ -13,6 +14,7 @@ class CommentModel {
     required this.rating,
     required this.content,
     required this.createdAt,
+    required this.userId,
   });
  factory CommentModel.fromMap(Map<String, dynamic> map) {
   return CommentModel(
@@ -22,6 +24,7 @@ class CommentModel {
     rating: (map['rating'] ?? 0),
     content: map['content'] ?? '',
     createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
+    userId: map['user_id'] ?? '',
   );
 }
 }

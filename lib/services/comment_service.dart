@@ -43,6 +43,7 @@ class CommentService {
       rating: (e['rating'] ?? 0),
       content: e['content'] ?? '',
       createdAt: DateTime.tryParse(e['created_at'] ?? '') ?? DateTime.now(),
+      userId: userId,
     ));
   }
 
@@ -59,20 +60,59 @@ class CommentService {
     if (user == null) return;
 
     try {
-      final response = await supabase.from('comments').insert({
-        'product_id': productId,
-        'user_id': user.id, // 🔥 lie le commentaire à l'utilisateur
-        'content': text,
-        'rating': rating,
-      });
-      if (response.error != null) {
-        throw Exception('Supabase error: ${response.error!.message}');
-      }
-    } catch (e, st) {
-      debugPrint('Supabase échec: $e\n$st');
-      // afficher widget/snackbar pour utilisateur
-    }
+  await supabase.from('comments').insert({
+    'product_id': productId,
+    'user_id': user.id,
+    'content': text,
+    'rating': rating,
+  });
+} catch (e) {
+  debugPrint('Erreur Supabase addComment: $e');
+}
+
+await supabase.rpc('update_product_rating', params: {
+  'p_id': productId,
+});
   }
+
+ Future<void> updateComment({
+  required String commentId,
+  required String text,
+  required int rating,
+  required String productId,
+}) async {
+  try {
+    await supabase
+        .from('comments')
+        .update({
+          'content': text,
+          'rating': rating,
+        })
+        .eq('id', commentId);
+
+    await supabase.rpc(
+      'update_product_rating',
+      params: {'p_id': productId},
+    );
+  } catch (e) {
+    debugPrint("Erreur updateComment: $e");
+  }
+}
+
+Future<void> deleteComment(String commentId, String productId) async {
+  try {
+    await supabase
+        .from('comments')
+        .delete()
+        .eq('id', commentId);
+
+    await supabase.rpc('update_product_rating', params: {
+  'p_id': productId,
+});
+  } catch (e) {
+    debugPrint("Erreur deleteComment: $e");
+  }
+}
 
   Future<String> getUsername(String userId) async {
   final res = await supabase

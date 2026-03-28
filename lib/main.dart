@@ -21,14 +21,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PeeMart',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Swansea',
-        useMaterial3: true,
-      ),
-      // home: const AuthGate(),
-      home: const HomePage(),
-    );
+  title: 'PeeMart',
+  debugShowCheckedModeBanner: false,
+  theme: ThemeData(
+    fontFamily: 'Swansea',
+    useMaterial3: true,
+  ),
+
+  initialRoute: '/home',
+
+  routes: {
+    '/home': (context) => const HomePage(),
+    '/auth': (context) => const AuthGate(),
+    // 👉 ajoute ici tes autres pages :
+    // '/boutiques': (context) => BoutiquesPage(),
+    // '/influenceurs': (context) => InfluenceursPage(),
+  },
+);
   }
 }
