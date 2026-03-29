@@ -18,7 +18,7 @@ class _NavBarState extends State<NavBar> {
   bool isConnected = false;
   String username = 'Utilisateur';
   String avatarUrl =
-      'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg';
+      'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png';
 
   int notificationsCount = 0;
   int favoritesCount = 0;

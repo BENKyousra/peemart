@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_page.dart';
 import '../widgets/profile_settings.dart';
 import '../widgets/profile_info.dart';
+import '../services/profile_service.dart';
+import '../models/profile_model.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -13,17 +16,19 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final supabase = Supabase.instance.client;
-
+  final ProfileService _service = ProfileService();
+  ProfileModel? profile;
   bool isLoading = true;
 
   // Infos utilisateur
   String username = '';
   String email = '';
-  String avatarUrl =
-      'https://images.pexels.com/photos/8335825/pexels-photo-8335825.jpeg';
+  static const String defaultAvatar =
+      'https://res.cloudinary.com/diqymizc6YOUR_CLOUD_NAME/image/upload/v1/defaults/avatar.png';
+
+  String avatarUrl = defaultAvatar;
   String bio = '';
   bool isSeller = false;
-  List<dynamic> favorites = [];
 
   @override
   void initState() {
@@ -32,31 +37,22 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadProfile() async {
-    final user = supabase.auth.currentUser;
-    if (user != null) {
-      final data =
-          await supabase.from('users').select().eq('id', user.id).maybeSingle();
+    try {
+      final data = await _service.getProfile();
 
-      if (data != null) {
-        setState(() {
-          username = data['username'] ?? '';
-          email = data['email'] ?? '';
-          avatarUrl = data['avatar_url'] ?? avatarUrl;
-          bio = data['bio'] ?? '';
-          isSeller = data['is_seller'] ?? false;
-          favorites = data['favorites'] ?? [];
-          isLoading = false;
-        });
-      }
+      setState(() {
+        profile = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      print("❌ error: $e");
+      setState(() => isLoading = false);
     }
   }
 
   Future<void> _updateField(String field, dynamic value) async {
-    final user = supabase.auth.currentUser;
-    if (user != null) {
-      await supabase.from('users').update({field: value}).eq('id', user.id);
-      _loadProfile();
-    }
+    await _service.updateField(field, value);
+    await _loadProfile();
   }
 
   Future<void> _logout() async {
@@ -67,6 +63,20 @@ class _ProfilePageState extends State<ProfilePage> {
       MaterialPageRoute(builder: (_) => const LoginPage()),
       (_) => false,
     );
+  }
+
+  //update avatar +++++++++++++++++++++++++++++++++++
+
+  Future<String?> _updateAvatar(XFile image) async {
+    final bytes = await image.readAsBytes();
+    final url = await _service.uploadAvatar(bytes);
+
+    if (url != null) {
+      await _updateField('avatar_url', url);
+      return url;
+    }
+
+    return null;
   }
 
   @override
@@ -111,9 +121,16 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Align(
                 alignment: Alignment.topLeft,
                 child: ProfileSettings(
-                  isSeller: isSeller,
+                  isSeller: profile!.isSeller,
                   updateSeller: (value) => _updateField('is_seller', value),
-                  logout: _logout,
+                  logout: () async {
+                    await _service.logout();
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginPage()),
+                      (_) => false,
+                    );
+                  },
                 ),
               ),
             ),
@@ -126,15 +143,14 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Align(
                 alignment: Alignment.topLeft,
                 child: ProfileInfo(
-                  avatarUrl: avatarUrl,
-                  username: username,
-                  email: email,
-                  isSeller: isSeller,
+                  avatarUrl: profile!.avatarUrl,
+                  username: profile!.username,
+                  email: profile!.email,
+                  isSeller: profile!.isSeller,
                   favorites: [],
-                  updateField:
-                      (field, value) => print('Mise à jour $field : $value'),
-
-                  bio: bio,
+                  bio: profile!.bio,
+                  updateField: _updateField,
+                  onAvatarChanged: _updateAvatar,
                 ),
               ),
             ),
