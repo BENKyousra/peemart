@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'settings_item.dart'; // ton widget SettingsItem
 
-class ProfileSettings extends StatelessWidget {
+class usersettings extends StatelessWidget {
   final bool isSeller;
   final Function(bool) updateSeller;
   final VoidCallback logout;
 
-  const ProfileSettings({
+  const usersettings({
     super.key,
     required this.isSeller,
     required this.updateSeller,

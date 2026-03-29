@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'product_card.dart';
+import 'see_more_card.dart';
 
 class ProductSection extends StatelessWidget {
   final String title;
@@ -17,6 +18,8 @@ class ProductSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const int maxItems = 8;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
@@ -29,14 +32,13 @@ class ProductSection extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       icon,
-                      color: Color.fromARGB(255, 0, 2, 105),
+                      color: const Color.fromARGB(255, 0, 2, 105),
                       size: 22,
-                    ), // un peu plus petit
-                    const SizedBox(width: 8), // petit espace collé au titre
+                    ),
+                    const SizedBox(width: 8),
                     Text(
                       title,
                       style: const TextStyle(
@@ -64,35 +66,58 @@ class ProductSection extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          // ===== PRODUITS (scroll horizontal) =====
+          // ===== PRODUITS =====
           SizedBox(
-            height: 360,
+            height: 365,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: products.length > 9 ? 9 : products.length,
+              itemCount:
+                  products.length > maxItems ? maxItems + 1 : products.length,
               itemBuilder: (context, index) {
+                // ===== CARTE VOIR PLUS =====
+                if (index == maxItems && products.length > maxItems) {
+                  return SeeMoreCard(
+                    remaining: products.length - maxItems,
+                    onTap: onSeeMore,
+                  );
+                }
+
                 final product = products[index];
+
+                // ===== IMAGES =====
+                final images =
+                    (product['product_images'] as List<dynamic>?)
+                        ?.map((e) => e['image_url'] as String)
+                        .toList() ??
+                    [];
+
+                final imageUrl =
+                    images.isNotEmpty
+                        ? images[0]
+                        : 'https://via.placeholder.com/150';
+
+                // ===== SHOP =====
 
                 final shop =
                     (product['shops'] is List && product['shops'].isNotEmpty)
-                        ? product['shops'][0]
+                        ? product['shops'][0] as Map<String, dynamic>
                         : null;
 
                 return ProductCard(
-                  title: product['title'] ?? '',
-
+                  title: product['title'],
                   imageUrl:
-                      product['image_url'] ?? 'https://via.placeholder.com/300',
-
-                  price: (product['price'] ?? 0).toDouble(),
-
-                  shopName: shop?['name'] ?? 'Boutique inconnue',
-
-                  shopAvatar:
-                      shop?['avatar_url'] ?? 'https://via.placeholder.com/150',
-
-                  rating: (product['rating'] ?? 0).toDouble(),
+                      images.isNotEmpty
+                          ? images[0]
+                          : 'https://via.placeholder.com/150',
+                  images: images,
+                  price: double.tryParse(product['price'].toString()) ?? 0.0,
+                  shopName: shop != null ? shop['name'] : 'Shop inconnu',
+                  shopAvatar: shop != null ? shop['avatar_url'] : '',
+                  rating: (product['rating'] as num?)?.toDouble() ?? 0.0,
+                  shopId: shop != null ? shop['id'].toString() : '',
+                  productId: product['id'].toString(),
+                  reviewCount: product['review_count'] ?? 0,
                 );
               },
             ),

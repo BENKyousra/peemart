@@ -48,7 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final data =
           await supabase
-              .from('profiles') // تأكد أن الجدول موجود
+              .from('users') // تأكد أن الجدول موجود
               .select()
               .eq('id', user.id)
               .single();
@@ -62,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 : defaultAvatar;
         bio = data['bio'] ?? '';
         isSeller = data['is_seller'] ?? false;
-        favorites = data['favorites'] ?? [];
+        favorites = data['favorites_count'] ?? [];
         isLoading = false;
       });
     } catch (e) {
@@ -72,13 +72,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _updateField(String field, dynamic value) async {
-    final user = supabase.auth.currentUser;
-    if (value == null || value.toString().trim().isEmpty) return;
-    if (user != null) {
-      await supabase.from('profiles').update({field: value}).eq('id', user.id);
-      await _loadProfile(); // الآن تنتظر إعادة تحميل البيانات
-    }
+  final user = supabase.auth.currentUser;
+  if (user == null) return;
+
+  try {
+    await supabase
+        .from('users')
+        .update({field: value})
+        .eq('id', user.id);
+
+    await _loadProfile();
+  } catch (e) {
+    print("❌ Update error: $e");
   }
+}
 
   Future<void> _logout() async {
     await supabase.auth.signOut();
@@ -117,7 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       // تحديث Supabase
       await supabase
-          .from('profiles')
+          .from('users')
           .update({'avatar_url': imageUrl})
           .eq('id', user.id);
 
@@ -168,7 +175,7 @@ class _ProfilePageState extends State<ProfilePage> {
               flex: 1,
               child: Align(
                 alignment: Alignment.topLeft,
-                child: ProfileSettings(
+                child: usersettings(
                   isSeller: isSeller,
                   updateSeller: (value) => _updateField('is_seller', value),
                   logout: _logout,
@@ -188,55 +195,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   username: username,
                   email: email,
                   isSeller: isSeller,
-                  favorites: [
-                    {
-                      'title': 'Sac à dos',
-                      'image_url':
-                          'https://images.pexels.com/photos/15271715/pexels-photo-15271715.jpeg?_gl=1*1bjmyyf*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNzM3JGoyOSRsMCRoMA..',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/2587370/pexels-photo-2587370.jpeg?_gl=1*asgoch*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNTA3JGo0OSRsMCRoMA..',
-                    },
-                    {
-                      'title': 'Sac à dos',
-                      'image_url':
-                          'https://images.pexels.com/photos/27596308/pexels-photo-27596308.jpeg?_gl=1*deiple*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUzMTI1JGozNiRsMCRoMA..',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/2688992/pexels-photo-2688992.jpeg?_gl=1*1b4lb4x*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNTM1JGoyMSRsMCRoMA..',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/17545644/pexels-photo-17545644.jpeg?_gl=1*j0v2ol*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNTYxJGo2MCRsMCRoMA..',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/190819/pexels-photo-190819.jpeg',
-                    },
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/15271715/pexels-photo-15271715.jpeg?_gl=1*1bjmyyf*_ga*MTc1NDgwNTg5Mi4xNzQ3NzcyOTEw*_ga_8JE65Q40S6*czE3Njk1NTI0MzMkbzU1JGcxJHQxNzY5NTUyNzM3JGoyOSRsMCRoMA..',
-                    },
-
-                    {
-                      'title': 'Produit',
-                      'image_url':
-                          'https://images.pexels.com/photos/46710/pexels-photo-46710.jpeg',
-                    },
-                  ],
-                  updateField: (field, value) => _updateField(field, value),
+                  favorites: [],
+                  updateField:
+                      (field, value) => print('Mise à jour $field : $value'),
                   bio: bio,
                   onAvatarChanged: (XFile image) async {
                     final bytes = await image.readAsBytes();

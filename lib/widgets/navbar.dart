@@ -27,6 +27,8 @@ class _NavBarState extends State<NavBar> {
   int favoritesCount = 0;
   int cartCount = 0;
 
+  String currentPage = "Accueil";
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +38,14 @@ class _NavBarState extends State<NavBar> {
       _loadUser();
     });
   }
+
+  final Map<String, String> routes = {
+  "Accueil": "/home",
+  // "Boutiques": "/boutiques",
+  // "Influenceurs": "/influenceurs",
+};
+
+
 
   Future<void> _loadUser() async {
     setState(() {
@@ -48,7 +58,7 @@ class _NavBarState extends State<NavBar> {
       try {
         final data =
             await supabase
-                .from('profiles')
+                .from('users')
                 .select()
                 .eq('id', user.id)
                 .maybeSingle();
@@ -88,6 +98,7 @@ class _NavBarState extends State<NavBar> {
         _isLoading = false;
       });
     }
+    
   }
 
   @override
@@ -233,10 +244,7 @@ class _NavBarState extends State<NavBar> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: TextButton(
         onPressed: () {},
-        child: Text(
-          title,
-          style: const TextStyle(color: Colors.white, fontSize: 18),
-        ),
+        child: Text(title, style: const TextStyle(color: Colors.white , fontSize: 18)),
       ),
     );
   }
