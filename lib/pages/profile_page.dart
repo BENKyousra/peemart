@@ -24,8 +24,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String username = '';
   String email = '';
   static const String defaultAvatar =
-      'https://res.cloudinary.com/diqymizc6YOUR_CLOUD_NAME/image/upload/v1/defaults/avatar.png';
-
+      'https://cdn.pixabay.com/photo/2017/07/18/23/23/user-2517433_1280.png';
   String avatarUrl = defaultAvatar;
   String bio = '';
   bool isSeller = false;
@@ -64,8 +63,6 @@ class _ProfilePageState extends State<ProfilePage> {
       (_) => false,
     );
   }
-
-  //update avatar +++++++++++++++++++++++++++++++++++
 
   Future<String?> _updateAvatar(XFile image) async {
     final bytes = await image.readAsBytes();

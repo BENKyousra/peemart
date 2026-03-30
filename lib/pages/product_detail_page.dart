@@ -4,6 +4,7 @@ import 'shop_page.dart';
 import '../widgets/comment.dart';
 import '../services/comment_service.dart';
 import '../models/comment_model.dart';
+import '../services/cart_service.dart';
 
 class ProductDetailPage extends StatefulWidget {
   final String title;
@@ -40,29 +41,30 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   late List<String> allImages;
   final CommentService commentService = CommentService();
   final currentUser = Supabase.instance.client.auth.currentUser;
+  final CartService cartService = CartService();
   List<CommentModel> comments = [];
   bool isLoadingComments = true;
 
- @override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
 
-  allImages = [];
+    allImages = [];
 
-  // ✅ image principale en premier
-  if (widget.imageUrl.isNotEmpty) {
-    allImages.add(widget.imageUrl);
+    // ✅ image principale en premier
+    if (widget.imageUrl.isNotEmpty) {
+      allImages.add(widget.imageUrl);
+    }
+
+    // ✅ images galerie ensuite
+    if (widget.images.isNotEmpty) {
+      allImages.addAll(widget.images);
+    }
+
+    selectedImage = 0;
+
+    fetchComments();
   }
-
-  // ✅ images galerie ensuite
-  if (widget.images.isNotEmpty) {
-    allImages.addAll(widget.images);
-  }
-
-  selectedImage = 0;
-
-  fetchComments();
-}
 
   Future<void> fetchComments() async {
     setState(() => isLoadingComments = true);
@@ -333,7 +335,31 @@ void initState() {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: () {},
+                            onPressed: () async {
+                              try {
+                                await cartService.addToCart(widget.productId);
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Produit ajouté au panier 🛒",
+                                    ),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: const Text("Ajouté au panier 🛒"),
+                                    duration: const Duration(seconds: 1),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
                             style: ElevatedButton.styleFrom(
                               padding: const EdgeInsets.all(18),
                               backgroundColor: const Color.fromARGB(

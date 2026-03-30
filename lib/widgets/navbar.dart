@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/login_page.dart';
 import '../pages/profile_page.dart';
+import '../pages/cart_page.dart';
 
 class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
@@ -159,7 +160,15 @@ class _NavBarState extends State<NavBar> {
       children: [
         _iconWithBadge(Icons.notifications, notificationsCount),
         _iconWithBadge(Icons.favorite, favoritesCount),
-        _iconWithBadge(Icons.shopping_cart, cartCount),
+        IconButton(
+  icon: const Icon(Icons.shopping_cart, color: Colors.white),
+  onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CartPage()),
+    );
+  },
+),
         const SizedBox(width: 16),
         GestureDetector(
   onTap: () {
