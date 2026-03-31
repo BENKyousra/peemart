@@ -114,7 +114,11 @@ class _CartPageState extends State<CartPage> {
                               subtitle: Text(
                                 "${item.price} DA",
                                 style: const TextStyle(
-                                  color: Colors.green, // 🔥 couleur du prix
+                                  color: Color.fromARGB(
+                                                255,
+                                                0,
+                                                169,
+                                                191), // 🔥 couleur du prix
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
