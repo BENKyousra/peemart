@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:peemart/pages/influenceurs_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/home_page.dart';
 import 'auth/auth_gate.dart';
@@ -35,7 +36,7 @@ class MyApp extends StatelessWidget {
     '/auth': (context) => const AuthGate(),
     // 👉 ajoute ici tes autres pages :
     // '/boutiques': (context) => BoutiquesPage(),
-    // '/influenceurs': (context) => InfluenceursPage(),
+    '/influenceurs': (context) => const InfluenceursPage(),
   },
 );
   }

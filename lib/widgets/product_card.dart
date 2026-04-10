@@ -151,7 +151,7 @@ class ProductCard extends StatelessWidget {
                         CircleAvatar(
                           radius: 15,
                           backgroundImage: NetworkImage(
-                            (shopAvatar != null && shopAvatar.isNotEmpty)
+                            (shopAvatar.isNotEmpty)
                                 ? shopAvatar
                                 : 'https://picsum.photos/100', // image par défaut
                           ),
@@ -159,7 +159,7 @@ class ProductCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            (shopName != null && shopName.isNotEmpty)
+                            (shopName.isNotEmpty)
                                 ? shopName
                                 : "Boutique",
                             maxLines: 1,

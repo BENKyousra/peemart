@@ -39,7 +39,7 @@ class _NavBarState extends State<NavBar> {
   final Map<String, String> routes = {
   "Accueil": "/home",
   // "Boutiques": "/boutiques",
-  // "Influenceurs": "/influenceurs",
+   "Influenceurs": "/influenceurs",
 };
 
 

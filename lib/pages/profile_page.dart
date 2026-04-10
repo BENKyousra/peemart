@@ -40,6 +40,10 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final data = await _service.getProfile();
 
+      if (data == null) {
+        throw Exception("Profile not found");
+      }
+
       setState(() {
         profile = data;
         isLoading = false;
