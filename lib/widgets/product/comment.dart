@@ -9,8 +9,11 @@ class CommentWidget extends StatelessWidget {
   final bool isOwner;
   final VoidCallback onDelete;
   final VoidCallback onEdit;
+  final String productId;
+  final String avatar;
+  
 
-  const CommentWidget({
+  CommentWidget({
     super.key,
     required this.id,
     required this.name,
@@ -20,6 +23,8 @@ class CommentWidget extends StatelessWidget {
     required this.isOwner,
     required this.onDelete,
     required this.onEdit,
+    required this.productId,
+    required this.avatar,
   });
 
   @override
@@ -36,8 +41,17 @@ class CommentWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              CircleAvatar(
+                radius: 16,
+                backgroundImage:
+                    avatar.isNotEmpty ? NetworkImage(avatar) : null,
+                child:
+                    avatar.isEmpty ? const Icon(Icons.person, size: 18) : null,
+              ),
 
+              const SizedBox(width: 8),
+
+              Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(width: 10),
 
               Row(
@@ -62,6 +76,7 @@ class CommentWidget extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.delete, size: 18, color: Colors.red),
                   onPressed: onDelete,
+                  
                 ),
               ],
             ],
@@ -69,7 +84,10 @@ class CommentWidget extends StatelessWidget {
 
           const SizedBox(height: 6),
 
-          Text(date, style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+          Text(
+            date,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          ),
 
           const SizedBox(height: 6),
 

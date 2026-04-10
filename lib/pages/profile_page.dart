@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_page.dart';
-import '../widgets/profile_settings.dart';
-import '../widgets/profile_info.dart';
+import 'seller_dashboard_page.dart';
+import '../widgets/profile/profile_layout.dart';
 import '../services/profile_service.dart';
 import '../models/profile_model.dart';
 
@@ -109,50 +109,17 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(5),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start, // top align
-          children: [
-            // ===== Colonne paramètres =====
-            Expanded(
-              flex: 1,
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: ProfileSettings(
+        child:  ProfileLayout(
                   isSeller: profile!.isSeller,
                   updateSeller: (value) => _updateField('is_seller', value),
-                  logout: () async {
-                    await _service.logout();
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginPage()),
-                      (_) => false,
-                    );
-                  },
-                ),
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // ===== Colonne infos =====
-            Expanded(
-              flex: 2,
-              child: Align(
-                alignment: Alignment.topLeft,
-                child: ProfileInfo(
+                  logout: _logout,
                   avatarUrl: profile!.avatarUrl,
                   username: profile!.username,
                   email: profile!.email,
-                  isSeller: profile!.isSeller,
-                  favorites: [],
                   bio: profile!.bio,
                   updateField: _updateField,
                   onAvatarChanged: _updateAvatar,
                 ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

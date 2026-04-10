@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/login_page.dart';
 import '../pages/profile_page.dart';
-import '../pages/cart_page.dart';
+import '../pages/products/cart_page.dart';
+import '../pages/seller_dashboard_page.dart';
 
 class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
@@ -27,6 +28,8 @@ class _NavBarState extends State<NavBar> {
 
   String currentPage = "Accueil";
 
+  bool isSeller = false;
+
   @override
   void initState() {
     super.initState();
@@ -38,12 +41,11 @@ class _NavBarState extends State<NavBar> {
   }
 
   final Map<String, String> routes = {
-  "Accueil": "/home",
-  // "Boutiques": "/boutiques",
-  // "Influenceurs": "/influenceurs",
-};
-
-
+    "Accueil": "/home",
+    "Dashboard": "/dashboard",
+    // "Boutiques": "/boutiques",
+    // "Influenceurs": "/influenceurs",
+  };
 
   Future<void> _loadUser() async {
     final user = supabase.auth.currentUser;
@@ -61,6 +63,7 @@ class _NavBarState extends State<NavBar> {
           notificationsCount = data['notifications_count'] ?? 0;
           favoritesCount = data['favorites_count'] ?? 0;
           cartCount = data['cart_count'] ?? 0;
+          isSeller = data['is_seller'] ?? false;
         });
       } catch (e) {
         // Si problème avec la table users, on met des valeurs par défaut
@@ -78,9 +81,7 @@ class _NavBarState extends State<NavBar> {
         isConnected = false;
       });
     }
-    
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -158,46 +159,58 @@ class _NavBarState extends State<NavBar> {
   Widget _connectedUI() {
     return Row(
       children: [
+        IconButton(
+          icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (_) => SellerDashboardPage(
+                      profile: {"username": username, "avatar_url": avatarUrl},
+                    ),
+              ),
+            );
+          },
+        ),
         _iconWithBadge(Icons.notifications, notificationsCount),
         _iconWithBadge(Icons.favorite, favoritesCount),
         IconButton(
-  icon: const Icon(Icons.shopping_cart, color: Colors.white),
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const CartPage()),
-    );
-  },
-),
+          icon: const Icon(Icons.shopping_cart, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CartPage()),
+            );
+          },
+        ),
         const SizedBox(width: 16),
         GestureDetector(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const ProfilePage()),
-    );
-  },
-  child: Row(
-    children: [
-      CircleAvatar(
-        radius: 22,
-        backgroundImage: NetworkImage(avatarUrl),
-      ),
-      const SizedBox(width: 8),
-      Text(
-        username,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-          height: 1.2,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ProfilePage()),
+            );
+          },
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundImage: NetworkImage(avatarUrl),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                username,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ],
-  ),
-),
-
-        
       ],
     );
   }
@@ -222,27 +235,27 @@ class _NavBarState extends State<NavBar> {
     );
   }
 
-Widget _navButton(String title) {
-  final currentRoute = ModalRoute.of(context)?.settings.name;
-  final isActive = currentRoute == routes[title];
+  Widget _navButton(String title) {
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    final isActive = currentRoute == routes[title];
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 12),
-    child: TextButton(
-      onPressed: () {
-        Navigator.pushReplacementNamed(context, routes[title]!);
-      },
-      child: Text(
-        title,
-        style: TextStyle(
-          color: isActive ? Color.fromARGB(255, 0, 169, 191) : Colors.white,
-          fontSize: 19,
-          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: TextButton(
+        onPressed: () {
+          Navigator.pushReplacementNamed(context, routes[title]!);
+        },
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isActive ? Color.fromARGB(255, 0, 169, 191) : Colors.white,
+            fontSize: 19,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _iconWithBadge(IconData icon, int count) {
     return Stack(

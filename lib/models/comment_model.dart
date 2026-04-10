@@ -6,6 +6,8 @@ class CommentModel {
   final String content;
   final DateTime createdAt;
   final String userId;
+  final String avatarUrl;
+  
 
   CommentModel({
     required this.id,
@@ -15,16 +17,18 @@ class CommentModel {
     required this.content,
     required this.createdAt,
     required this.userId,
+    required this.avatarUrl,
   });
- factory CommentModel.fromMap(Map<String, dynamic> map) {
-  return CommentModel(
-    id: map['id'] ?? '',
-    productId: map['product_id'] ?? '',
-    name: map['username'] ?? 'Utilisateur', // ou vide si pas de join
-    rating: (map['rating'] ?? 0),
-    content: map['content'] ?? '',
-    createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
-    userId: map['user_id'] ?? '',
-  );
-}
+  factory CommentModel.fromMap(Map<String, dynamic> map) {
+    return CommentModel(
+      id: map['id'] ?? '',
+      productId: map['product_id'] ?? '',
+      name: map['username'] ?? 'Utilisateur', // ou vide si pas de join
+      rating: (map['rating'] ?? 0),
+      content: map['content'] ?? '',
+      createdAt: DateTime.tryParse(map['created_at'] ?? '') ?? DateTime.now(),
+      userId: map['user_id'] ?? '',
+      avatarUrl: map['avatar_url'] ?? '',
+    );
+  }
 }

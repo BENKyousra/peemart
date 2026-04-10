@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../models/product_model.dart';
 import 'product_card.dart';
-import 'see_more_card.dart';
+import '../../widgets/see_more_card.dart';
 
 class ProductSection extends StatelessWidget {
   final String title;
-  final List<Map<String, dynamic>> products;
+  final List<ProductModel> products;
   final VoidCallback onSeeMore;
   final IconData icon;
 
@@ -25,7 +26,7 @@ class ProductSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== TITRE + VOIR PLUS =====
+          // ===== HEADER =====
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
@@ -66,7 +67,7 @@ class ProductSection extends StatelessWidget {
 
           const SizedBox(height: 15),
 
-          // ===== PRODUITS =====
+          // ===== LISTE PRODUITS =====
           SizedBox(
             height: 365,
             child: ListView.builder(
@@ -75,7 +76,7 @@ class ProductSection extends StatelessWidget {
               itemCount:
                   products.length > maxItems ? maxItems + 1 : products.length,
               itemBuilder: (context, index) {
-                // ===== CARTE VOIR PLUS =====
+                // ===== SEE MORE =====
                 if (index == maxItems && products.length > maxItems) {
                   return SeeMoreCard(
                     remaining: products.length - maxItems,
@@ -85,38 +86,9 @@ class ProductSection extends StatelessWidget {
 
                 final product = products[index];
 
-                // ===== IMAGES =====
-                final images =
-                    (product['product_images'] as List<dynamic>?)
-                        ?.map((e) => e['image_url'] as String)
-                        .toList() ??
-                    [];
-
-                final imageUrl =
-                    images.isNotEmpty
-                        ? images[0]
-                        : 'https://via.placeholder.com/150';
-
-                // ===== SHOP =====
-                final shop = product['shops'] as Map<String, dynamic>?;
-
                 return ProductCard(
-                  productId: product['id'].toString(),
-                  title: product['title'] ?? '',
-                  imageUrl: imageUrl,
-                  images: images,
-                  price: (product['price'] as num?)?.toDouble() ?? 0.0,
-
-                  // ✅ CORRECTION ICI
-                  shopName: shop?['name'] ?? '',
-                  shopAvatar: shop?['avatar'] ?? '',
-
-                  // ✅ IMPORTANT
-                  shopId: product['shop_id'].toString(),
-
-                  rating: (product['rating'] as num?)?.toDouble() ?? 0,
-                  reviewCount: product['review_count'] ?? 0,
-                  
+                  product: product, // 🔥 CLEAN
+                  reviewCount: 0, // 👉 adapte si tu l’as dans ton model
                 );
               },
             ),

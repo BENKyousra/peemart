@@ -1,32 +1,16 @@
 import 'package:flutter/material.dart';
-
-import '../pages/product_detail_page.dart';
-import '../pages/shop_page.dart';
+import '../../pages/products/product_detail_page.dart';
+import '../../pages/shop_page.dart';
+import '../../models/product_model.dart';
 
 class ProductCard extends StatelessWidget {
-  final String title;
-  final String imageUrl;
-  final List<String> images;
-  final double price;
-  final String shopName;
-  final String shopAvatar;
-  final double rating;
-  final String shopId;
-  final String productId;
+  final ProductModel product;
   final int reviewCount;
   final VoidCallback? onRefresh;
 
   const ProductCard({
     super.key,
-    required this.title,
-    required this.imageUrl,
-    required this.images,
-    required this.price,
-    required this.shopName,
-    required this.shopAvatar,
-    required this.rating,
-    required this.shopId,
-    required this.productId,
+    required this.product,
     required this.reviewCount,
     this.onRefresh,
   });
@@ -38,25 +22,13 @@ class ProductCard extends StatelessWidget {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => ProductDetailPage(
-                  productId: productId,
-                  title: title,
-                  imageUrl: imageUrl,
-                  images: images,
-                  price: price,
-                  shopName: shopName,
-                  shopId: shopId,
-                  shopAvatar: shopAvatar,
-                  rating: rating,
-                  description: "Ceci est une description...",
-                ),
+            builder: (context) => ProductDetailPage(product: product),
           ),
         );
 
         if (result == true) {
-  onRefresh?.call(); // 🔥 propre
-}
+          onRefresh?.call();
+        }
       },
       child: Container(
         width: 240,
@@ -81,13 +53,24 @@ class ProductCard extends StatelessWidget {
                 top: Radius.circular(14),
               ),
               child: Image.network(
-                imageUrl,
+                product.image,
                 height: 240,
                 width: double.infinity,
                 fit: BoxFit.cover,
+                alignment: Alignment.center,
                 loadingBuilder: (context, child, progress) {
                   if (progress == null) return child;
-                  return const Center(child: CircularProgressIndicator());
+                  return const SizedBox(
+                    height: 240,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                },
+                errorBuilder: (_, __, ___) {
+                  return Container(
+                    height: 240,
+                    color: Colors.grey[300],
+                    child: const Icon(Icons.image, size: 50),
+                  );
                 },
               ),
             ),
@@ -99,9 +82,9 @@ class ProductCard extends StatelessWidget {
                 children: [
                   // ===== NOM PRODUIT =====
                   Text(
-                    title,
+                    product.title,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis, // 👈 points ...
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -112,7 +95,7 @@ class ProductCard extends StatelessWidget {
 
                   // ===== PRIX =====
                   Text(
-                    '${price.toStringAsFixed(0)} DA',
+                    '${product.price.toStringAsFixed(0)} DA',
                     style: const TextStyle(
                       color: Color.fromARGB(255, 0, 169, 191),
                       fontWeight: FontWeight.bold,
@@ -125,24 +108,30 @@ class ProductCard extends StatelessWidget {
                   // ===== RATING =====
                   Row(
                     children: [
-                      _buildStars(rating),
+                      _buildStars(product.rating),
                       const SizedBox(width: 6),
-                      Text(rating.toStringAsFixed(1)),
+                      Text(product.rating.toStringAsFixed(1)),
                       const SizedBox(width: 4),
                       Text(
                         "($reviewCount)",
-                        style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 6),
+
+                  // ===== SHOP =====
                   InkWell(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ShopPage(shopId: shopId),
+                          builder: (context) =>
+                              ShopPage(shopId: product.shopId),
                         ),
                       );
                     },
@@ -151,16 +140,16 @@ class ProductCard extends StatelessWidget {
                         CircleAvatar(
                           radius: 15,
                           backgroundImage: NetworkImage(
-                            (shopAvatar != null && shopAvatar.isNotEmpty)
-                                ? shopAvatar
-                                : 'https://picsum.photos/100', // image par défaut
+                            product.shopAvatar.isNotEmpty
+                                ? product.shopAvatar
+                                : 'https://picsum.photos/100',
                           ),
                         ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            (shopName != null && shopName.isNotEmpty)
-                                ? shopName
+                            product.shopName.isNotEmpty
+                                ? product.shopName
                                 : "Boutique",
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

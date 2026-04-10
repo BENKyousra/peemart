@@ -1,0 +1,79 @@
+import 'package:flutter/material.dart';
+import 'products/add_product_page.dart';
+
+// widgets
+import '../widgets/dashboard/dashboard_header.dart';
+import '../widgets/dashboard/dashboard_menu.dart';
+import '../widgets/dashboard/products_section.dart';
+import '../widgets/dashboard/orders_section.dart';
+import '../widgets/dashboard/promos_section.dart';
+import '../widgets/dashboard/stats_section.dart';
+
+class SellerDashboardPage extends StatefulWidget {
+  final Map<String, dynamic> profile;
+
+  const SellerDashboardPage({super.key, required this.profile});
+
+  @override
+  State<SellerDashboardPage> createState() => _SellerDashboardPageState();
+}
+
+class _SellerDashboardPageState extends State<SellerDashboardPage> {
+  int index = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Dashboard Seller"),
+      ),
+
+      body: Column(
+        children: [
+          DashboardHeader(username: widget.profile['username'] ?? ''),
+
+          const SizedBox(height: 10),
+
+          DashboardMenu(
+            currentIndex: index,
+            onChanged: (i) {
+              setState(() => index = i);
+            },
+          ),
+
+          const Divider(),
+
+          Expanded(child: _buildContent()),
+        ],
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AddProductPage(),
+            ),
+          );
+        },
+        backgroundColor: const Color.fromARGB(255, 0, 2, 105),
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    switch (index) {
+      case 0:
+        return const ProductsSection();
+      case 1:
+        return const OrdersSection();
+      case 2:
+        return const PromosSection();
+      case 3:
+        return const StatsSection();
+      default:
+        return const SizedBox();
+    }
+  }
+}

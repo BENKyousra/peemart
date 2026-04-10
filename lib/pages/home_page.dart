@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../widgets/product_section.dart';
+import '../widgets/product/product_section.dart';
 import '../widgets/navbar.dart';
-import 'products_list_page.dart';
-import 'add_product_page.dart';
+import 'products/products_list_page.dart';
+import '../models/product_model.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,9 +13,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Map<String, dynamic>> recentProducts = [];
-  List<Map<String, dynamic>> popularProducts = [];
-  List<Map<String, dynamic>> sponsoredProducts = [];
+  List<ProductModel> recentProducts = [];
+  List<ProductModel> popularProducts = [];
+  List<ProductModel> sponsoredProducts = [];
 
   bool isLoading = true;
   bool isSeller = false;
@@ -24,11 +23,18 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    fetchProducts();
-    loadUserRole(); // ✅ important
+    loadData();
   }
 
-  // ===== LOAD USER ROLE =====
+  // ===== LOAD ALL DATA =====
+  Future<void> loadData() async {
+    await Future.wait([
+      fetchProducts(),
+      loadUserRole(),
+    ]);
+  }
+
+  // ===== USER ROLE =====
   Future<void> loadUserRole() async {
     final supabase = Supabase.instance.client;
     final user = supabase.auth.currentUser;
@@ -50,40 +56,52 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ===== LOAD PRODUCTS =====
+  // ===== PRODUCTS =====
   Future<void> fetchProducts() async {
     final supabase = Supabase.instance.client;
 
     try {
-      final recent = await supabase
-          .from('products')
-          .select('*, shops(*), product_images(*)')
-          .order('created_at', ascending: false)
-          .limit(10);
+      final results = await Future.wait([
+        supabase
+            .from('products')
+            .select('*, shops(*), product_images(*)')
+            .order('created_at', ascending: false)
+            .limit(10),
 
-      final popular = await supabase
-          .from('products')
-          .select('*, shops(*), product_images(*)')
-          .order('rating', ascending: false)
-          .limit(10);
+        supabase
+            .from('products')
+            .select('*, shops(*), product_images(*)')
+            .order('rating', ascending: false)
+            .limit(10),
 
-      final sponsored = await supabase
-          .from('products')
-          .select('*, shops(*), product_images(*)')
-          .limit(10);
+        supabase
+            .from('products')
+            .select('*, shops(*), product_images(*)')
+            .limit(10),
+      ]);
+
+      final recent = results[0] as List;
+      final popular = results[1] as List;
+      final sponsored = results[2] as List;
 
       setState(() {
-        recentProducts = List<Map<String, dynamic>>.from(recent);
-        popularProducts = List<Map<String, dynamic>>.from(popular);
-        sponsoredProducts = List<Map<String, dynamic>>.from(sponsored);
+        recentProducts =
+            recent.map((p) => ProductModel.fromMap(p)).toList();
+
+        popularProducts =
+            popular.map((p) => ProductModel.fromMap(p)).toList();
+
+        sponsoredProducts =
+            sponsored.map((p) => ProductModel.fromMap(p)).toList();
+
         isLoading = false;
       });
     } catch (e) {
       print("Erreur fetchProducts: $e");
+      setState(() => isLoading = false);
     }
   }
 
-  // ===== UI =====
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,7 +113,7 @@ class _HomePageState extends State<HomePage> {
 
           Expanded(
             child: RefreshIndicator(
-              onRefresh: fetchProducts,
+              onRefresh: loadData, // 🔥 refresh global
 
               child: isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -133,22 +151,6 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-
-      // ===== FLOATING BUTTON =====
-      floatingActionButton: isSeller
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AddProductPage(),
-                  ),
-                );
-              },
-              backgroundColor: const Color.fromARGB(255, 0, 2, 105),
-              child: const Icon(Icons.add, color: Colors.white),
-            )
-          : null,
     );
   }
 
@@ -157,7 +159,7 @@ class _HomePageState extends State<HomePage> {
     BuildContext context, {
     required String title,
     required IconData icon,
-    required List<Map<String, dynamic>> products,
+    required List<ProductModel> products,
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -167,8 +169,8 @@ class _HomePageState extends State<HomePage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.1), // 🔥 plus léger
+            blurRadius: 6,
             offset: const Offset(0, 3),
           ),
         ],
@@ -181,7 +183,9 @@ class _HomePageState extends State<HomePage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ProductsListPage(title: title),
+              builder: (_) => ProductsListPage(
+                title: title,
+              ),
             ),
           );
         },

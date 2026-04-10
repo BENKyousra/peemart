@@ -88,4 +88,17 @@ class CartService {
         .from('cart_items')
         .update({'quantity': qty}).eq('id', id);
   }
+
+Future<void> applyPromoToItem({
+  required String itemId,
+  required String code,
+  required double discount,
+}) async {
+  await supabase.from('cart_items').update({
+    'promo_code': code,
+    'discount': discount,
+  }).eq('id', itemId);
+}
+
+
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/home_page.dart';
+import 'pages/seller_dashboard_page.dart';
 import 'auth/auth_gate.dart';
 
 Future<void> main() async {
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
   ),
 
   initialRoute: '/home',
+  
 
   routes: {
     '/home': (context) => const HomePage(),
