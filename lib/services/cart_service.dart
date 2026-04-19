@@ -52,27 +52,34 @@ class CartService {
 
   // 🔹 ADD
   Future<void> addToCart(String productId) async {
-    final user = supabase.auth.currentUser;
+  final user = supabase.auth.currentUser;
 
-    final existing = await supabase
-        .from('cart_items')
-        .select()
-        .eq('user_id', user!.id)
-        .eq('product_id', productId)
-        .maybeSingle();
+  final product = await supabase
+      .from('products')
+      .select('price')
+      .eq('id', productId)
+      .single();
 
-    if (existing != null) {
-      await supabase.from('cart_items').update({
-        'quantity': existing['quantity'] + 1
-      }).eq('id', existing['id']);
-    } else {
-      await supabase.from('cart_items').insert({
-        'user_id': user.id,
-        'product_id': productId,
-        'quantity': 1,
-      });
-    }
+  final existing = await supabase
+      .from('cart_items')
+      .select()
+      .eq('user_id', user!.id)
+      .eq('product_id', productId)
+      .maybeSingle();
+
+  if (existing != null) {
+    await supabase.from('cart_items').update({
+      'quantity': existing['quantity'] + 1,
+    }).eq('id', existing['id']);
+  } else {
+    await supabase.from('cart_items').insert({
+      'user_id': user.id,
+      'product_id': productId,
+      'quantity': 1,
+      'price': product['price'], // ✅ IMPORTANT
+    });
   }
+}
 
   // 🔹 REMOVE
   Future<void> removeItem(String id) async {

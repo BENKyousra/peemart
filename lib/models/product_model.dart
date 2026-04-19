@@ -15,6 +15,8 @@ class ProductModel {
   final List<String> colors;
   final List<String> sizes;
 
+  final int reviewCount;
+ 
   ProductModel({
     required this.id,
     required this.title,
@@ -28,6 +30,7 @@ class ProductModel {
     required this.rating,
     this.colors = const [],
     this.sizes = const [],
+    required this.reviewCount,
   });
 
   /// ✅ toutes les images
@@ -64,6 +67,8 @@ class ProductModel {
             ),
           )
         : [],
+
+    reviewCount: map['review_count'] ?? 0,
 
     // 🔥 SHOP CORRECT
     shopName: shop?['name'] ?? '',

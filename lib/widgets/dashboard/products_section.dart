@@ -89,7 +89,7 @@ class _ProductsSectionState extends State<ProductsSection> {
 
                 // 🗑️ DELETE
                 IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
+                  icon: const Icon(Icons.delete, color: Color.fromARGB(255, 255, 10, 88)),
                   onPressed: () async {
                     final confirm = await showDialog(
                       context: context,

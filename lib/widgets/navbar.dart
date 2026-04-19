@@ -4,6 +4,8 @@ import '../pages/login_page.dart';
 import '../pages/profile_page.dart';
 import '../pages/products/cart_page.dart';
 import '../pages/seller_dashboard_page.dart';
+import '../services/notification_service.dart';
+import '../pages/notifications_page.dart';
 
 class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
@@ -16,6 +18,7 @@ class NavBar extends StatefulWidget {
 
 class _NavBarState extends State<NavBar> {
   final supabase = Supabase.instance.client;
+  final notifService = NotificationService();
 
   bool isConnected = false;
   String username = 'Utilisateur';
@@ -44,7 +47,7 @@ class _NavBarState extends State<NavBar> {
     "Accueil": "/home",
     "Dashboard": "/dashboard",
     // "Boutiques": "/boutiques",
-    // "Influenceurs": "/influenceurs",
+    "Influenceurs": "/influenceurs",
   };
 
   Future<void> _loadUser() async {
@@ -173,7 +176,45 @@ class _NavBarState extends State<NavBar> {
             );
           },
         ),
-        _iconWithBadge(Icons.notifications, notificationsCount),
+        StreamBuilder<int>(
+          stream: notifService.unreadCount(supabase.auth.currentUser!.id),
+          builder: (context, snapshot) {
+            final count = snapshot.data ?? 0;
+
+            return Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.notifications, color: Colors.white),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsPage(),
+                      ),
+                    );
+                  },
+                ),
+
+                if (count > 0)
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: CircleAvatar(
+                      radius: 8,
+                      backgroundColor: Color.fromARGB(255, 255, 10, 88),
+                      child: Text(
+                        '$count',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
         _iconWithBadge(Icons.favorite, favoritesCount),
         IconButton(
           icon: const Icon(Icons.shopping_cart, color: Colors.white),

@@ -48,7 +48,7 @@ class CartModel {
       shopAvatar: shopAvatar,
       rating: rating,
       description: description,
-      
+      reviewCount: 0,
     );
   }
 }

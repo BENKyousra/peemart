@@ -12,7 +12,21 @@ class DashboardMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 10),
+    padding: const EdgeInsets.symmetric(vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black12,
+          blurRadius: 10,
+          spreadRadius: 1,
+        ),
+      ],
+    ),
+    child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         _item(Icons.store, "Produits", 0),
@@ -20,8 +34,9 @@ class DashboardMenu extends StatelessWidget {
         _item(Icons.local_offer, "Promos", 2),
         _item(Icons.bar_chart, "Stats", 3),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _item(IconData icon, String label, int i) {
     final isActive = currentIndex == i;
@@ -32,14 +47,13 @@ class DashboardMenu extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: isActive ? Colors.blue : Colors.grey,
+            color: isActive ? Color.fromARGB(255, 0, 169, 191) : Colors.grey,
           ),
           Text(
             label,
             style: TextStyle(
-              color: isActive ? Colors.blue : Colors.grey,
-              fontWeight:
-                  isActive ? FontWeight.bold : FontWeight.normal,
+              color: isActive ? Color.fromARGB(255, 0, 169, 191) : Colors.grey,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ],

@@ -149,4 +149,59 @@ class ProductService {
 
     return List<Map<String, dynamic>>.from(response);
   }
+
+   Future<Map<String, dynamic>> getProductById(String productId) async {
+  final res = await supabase
+      .from('products')
+      .select('''
+        *,
+        influencers(*),
+        product_images(*)
+      ''')
+      .eq('id', productId)
+      .single();
+    return res;
+  }
+  Future<int> getLikesCount(String productId) async {
+  final res = await supabase
+      .from('likes')
+      .select()
+      .eq('product_id', productId);
+   return res.length;
+  }
+  Future<bool> isLiked(String productId) async {
+  final user = supabase.auth.currentUser;
+  final res = await supabase
+      .from('likes')
+      .select()
+      .eq('product_id', productId)
+      .eq('user_id', user!.id);
+    return res.isNotEmpty;
+  }
+  Future<void> toggleLike(String productId) async {
+  final user = supabase.auth.currentUser;
+  final existing = await supabase
+      .from('likes')
+      .select()
+      .eq('product_id', productId)
+      .eq('user_id', user!.id);
+  if (existing.isNotEmpty) {
+    await supabase
+        .from('likes')
+        .delete()
+        .eq('product_id', productId)
+        .eq('user_id', user.id);
+  } else {
+    await supabase.from('likes').insert({
+      'product_id': productId,
+      'user_id': user.id,
+    });
+  }
+  }
+  Future<List<Map<String, dynamic>>> getAllProducts() async {
+  final res = await supabase
+      .from('products')
+      .select('id, title');
+  return List<Map<String, dynamic>>.from(res);
+}
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/cart_service.dart';
 import '../../services/promo_service.dart';
 import '../../models/cart_model.dart';
+import '../../widgets/product/checkout_button.dart';
 
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
@@ -14,6 +15,18 @@ class _CartPageState extends State<CartPage> {
   final cartService = CartService();
   final refreshNotifier = ValueNotifier(0);
   final promoService = PromoService();
+
+  // ✅ controllers par item
+  final Map<String, TextEditingController> promoControllers = {};
+
+  @override
+  void dispose() {
+    // 🔥 éviter memory leak
+    for (var controller in promoControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,8 +57,10 @@ class _CartPageState extends State<CartPage> {
                   for (var item in items) {
                     double itemTotal = item.price * item.quantity;
 
+                    // ✅ CORRECTION DISCOUNT
                     if (item.discount > 0) {
-                      itemTotal = itemTotal - (itemTotal * item.discount);
+                      itemTotal =
+                          itemTotal - (itemTotal * (item.discount / 100));
                     }
 
                     total += itemTotal;
@@ -59,7 +74,9 @@ class _CartPageState extends State<CartPage> {
                           itemBuilder: (context, index) {
                             final item = items[index];
 
-                            final promoController = TextEditingController();
+                            final promoController =
+                                promoControllers[item.id] ??=
+                                    TextEditingController();
 
                             return Card(
                               margin: const EdgeInsets.all(10),
@@ -74,7 +91,6 @@ class _CartPageState extends State<CartPage> {
                                           width: 80,
                                           height: 80,
                                         ),
-
                                         const SizedBox(width: 10),
 
                                         Expanded(
@@ -88,7 +104,6 @@ class _CartPageState extends State<CartPage> {
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-
                                               Text("${item.price} DA"),
 
                                               if (item.selectedColor != null)
@@ -108,14 +123,16 @@ class _CartPageState extends State<CartPage> {
 
                                     const SizedBox(height: 10),
 
-                                    // 🔥 PROMO PRODUIT
+                                    // 🔥 PROMO
                                     Row(
                                       children: [
                                         Expanded(
                                           child: TextField(
                                             controller: promoController,
-                                            decoration: InputDecoration(
-                                              hintText: "Code promo produit",
+                                            decoration:
+                                                const InputDecoration(
+                                              hintText:
+                                                  "Code promo produit",
                                               border: OutlineInputBorder(),
                                             ),
                                           ),
@@ -123,48 +140,76 @@ class _CartPageState extends State<CartPage> {
 
                                         IconButton(
                                           icon: const Icon(Icons.check),
-                                          onPressed: () async {
-                                            String code =
-                                                promoController.text.trim();
+                                          onPressed: item.discount > 0
+                                              ? null
+                                              : () async {
+                                                  String code =
+                                                      promoController.text
+                                                          .trim();
 
-                                            final promo = await promoService
-                                                .validatePromo(
-                                                  productId: item.productId,
-                                                  code: code,
-                                                );
+                                                  if (code.isEmpty) {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                            "Entrer un code"),
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
 
-                                            if (promo == null) {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    "Code invalide ❌",
-                                                  ),
-                                                ),
-                                              );
-                                              return;
-                                            }
+                                                  final promo =
+                                                      await promoService
+                                                          .validatePromo(
+                                                    productId:
+                                                        item.productId,
+                                                    code: code,
+                                                  );
 
-                                            await cartService.applyPromoToItem(
-                                              itemId: item.id,
-                                              code: code,
-                                              discount: promo.discount,
-                                            );
+                                                  if (promo == null) {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                            "Code invalide ❌"),
+                                                      ),
+                                                    );
+                                                    return;
+                                                  }
 
-                                            await promoService.incrementUsage(
-                                              promo.id,
-                                            );
+                                                  await cartService
+                                                      .applyPromoToItem(
+                                                    itemId: item.id,
+                                                    code: code,
+                                                    discount:
+                                                        promo.discount,
+                                                  );
 
-                                            refreshNotifier.value++;
-                                          },
+                                                  await promoService
+                                                      .incrementUsage(
+                                                          promo.id);
+
+                                                  ScaffoldMessenger.of(
+                                                          context)
+                                                      .showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        "Promo appliquée (-${promo.discount}%) ✅",
+                                                      ),
+                                                    ),
+                                                  );
+
+                                                  refreshNotifier.value++;
+                                                },
                                         ),
                                       ],
                                     ),
 
                                     if (item.discount > 0)
                                       Text(
-                                        "-${(item.discount * 100).toInt()}% appliqué",
+                                        "-${item.discount.toInt()}% appliqué",
                                         style: const TextStyle(
                                           color: Colors.green,
                                         ),
@@ -202,8 +247,7 @@ class _CartPageState extends State<CartPage> {
                                           icon: const Icon(Icons.delete),
                                           onPressed: () async {
                                             await cartService.removeItem(
-                                              item.id,
-                                            );
+                                                item.id);
                                             refreshNotifier.value++;
                                           },
                                         ),
@@ -227,12 +271,10 @@ class _CartPageState extends State<CartPage> {
                               style: const TextStyle(fontSize: 20),
                             ),
                             const SizedBox(height: 10),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {},
-                                child: const Text("Commander"),
-                              ),
+                            CheckoutButton(
+                              onSuccess: () {
+                                refreshNotifier.value++;
+                              },
                             ),
                           ],
                         ),
