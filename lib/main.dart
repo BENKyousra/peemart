@@ -5,6 +5,8 @@ import 'pages/seller_dashboard_page.dart';
 import 'auth/auth_gate.dart';
 import 'pages/influencer_page.dart';
 import 'pages/influencers_list_page.dart';
+import 'pages/feedback_page.dart';
+import 'widgets/navbar.dart';
 
 
 Future<void> main() async {
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
     // 👉 ajoute ici tes autres pages :
     // '/boutiques': (context) => BoutiquesPage(),
     '/influenceurs': (context) => const InfluencersListPage(),
+    '/feedback': (context) => const FeedbackPage(),
   },
 );
   }

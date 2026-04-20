@@ -46,8 +46,10 @@ class _NavBarState extends State<NavBar> {
   final Map<String, String> routes = {
     "Accueil": "/home",
     "Dashboard": "/dashboard",
-    // "Boutiques": "/boutiques",
+    "Boutiques": "/boutiques",
     "Influenceurs": "/influenceurs",
+    "Feedback": "/feedback",
+    "Concours": "/concours",
   };
 
   Future<void> _loadUser() async {

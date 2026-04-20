@@ -110,7 +110,7 @@ class _HomePageState extends State<HomePage> {
       body: Column(
         children: [
           const NavBar(),
-
+ 
           Expanded(
             child: RefreshIndicator(
               onRefresh: loadData, // 🔥 refresh global
