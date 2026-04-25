@@ -30,6 +30,25 @@ class _CommentSectionState extends State<CommentSection> {
 
         final comments = snapshot.data!;
 
+        if (comments.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(height: 10),
+                Text(
+                  "Pas de commentaires encore",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
         return Column(
           children:
               comments.map((c) {
@@ -46,7 +65,7 @@ class _CommentSectionState extends State<CommentSection> {
                     await commentService.deleteComment(c.id, widget.productId);
 
                     setState(() {
-                      _streamKey = UniqueKey(); // 🔥 force refresh
+                      _streamKey = UniqueKey();
                     });
                   },
                   onEdit: () {

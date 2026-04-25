@@ -156,4 +156,13 @@ class CommentService {
           }).toList();
         });
   }
+
+  Future<int> getCommentsCount(String productId) async {
+  final response = await supabase
+      .from('comments')
+      .select('id')
+      .eq('product_id', productId);
+
+  return response.length;
+}
 }

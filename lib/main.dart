@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
     useMaterial3: true,
   ),
 
-  initialRoute: '/auth',
+  initialRoute: '/home',
   
 
   routes: {

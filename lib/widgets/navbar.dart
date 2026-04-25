@@ -164,20 +164,23 @@ class _NavBarState extends State<NavBar> {
   Widget _connectedUI() {
     return Row(
       children: [
-        IconButton(
-          icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (_) => SellerDashboardPage(
-                      profile: {"username": username, "avatar_url": avatarUrl},
-                    ),
-              ),
-            );
-          },
+        if (isSeller)
+  IconButton(
+    icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SellerDashboardPage(
+            profile: {
+              "username": username,
+              "avatar_url": avatarUrl,
+            },
+          ),
         ),
+      );
+    },
+  ),
         StreamBuilder<int>(
           stream: notifService.unreadCount(supabase.auth.currentUser!.id),
           builder: (context, snapshot) {

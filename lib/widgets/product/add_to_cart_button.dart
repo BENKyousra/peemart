@@ -9,19 +9,23 @@ class AddToCartButton extends StatelessWidget {
 
   const AddToCartButton({super.key, required this.productId, this.selectedColor, this.selectedSize, this.variantId });
 
-  @override
-  Widget build(BuildContext context) {
-    final cartService = CartService();
+ @override
+Widget build(BuildContext context) {
+  final cartService = CartService();
 
-    return ElevatedButton(
-      onPressed: () async {
-        await cartService.addToCart(productId);
+  return ElevatedButton(
+    onPressed: () async {
+      await cartService.addToCart(productId);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Ajouté au panier 🛒")),
-        );
-      },
-      child: const Text("Ajouter au panier"),
-    );
-  }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Ajouté au panier 🛒")),
+      );
+    },
+    style: ElevatedButton.styleFrom(
+      backgroundColor: Color.fromARGB(255, 0, 169, 191), // couleur du bouton
+      foregroundColor: Colors.white, // couleur du texte
+    ),
+    child: const Text("Ajouter au panier"),
+  );
+}
 }

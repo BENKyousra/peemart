@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
+import '../../services/comment_service.dart';
 import '../../widgets/product/rating_stars.dart';
 import '../../widgets/product/add_to_cart_button.dart';
 import '../../pages/shop_page.dart';
+
 
 class ProductInfo extends StatefulWidget {
   final ProductModel product;
@@ -102,13 +104,20 @@ class _ProductInfoState extends State<ProductInfo> {
         ),
 
         const SizedBox(height: 20),
+FutureBuilder<int>(
+  future: CommentService().getCommentsCount(product.id),
+  builder: (context, snapshot) {
+    final count = snapshot.data ?? 0;
 
-        Row(
-          children: [
-            RatingStars(rating: product.rating),
-            Text(" (${widget.commentsCount})"),
-          ],
-        ),
+    return Row(
+      children: [
+        RatingStars(rating: product.rating),
+        const SizedBox(width: 6),
+        Text("($count)"),
+      ],
+    );
+  },
+),
 
         const SizedBox(height: 20),
 
