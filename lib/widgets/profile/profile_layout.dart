@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../../widgets/profile/profile_settings.dart';
 import '../../widgets/profile/profile_info.dart';
-import 'package:image_picker/image_picker.dart';
+import '../../models/product_model.dart';
 
-class ProfileLayout extends StatelessWidget {
+class ProfileLayout extends StatefulWidget {
   final bool isSeller;
   final Function(bool) updateSeller;
   final Future<void> Function() logout;
@@ -29,41 +32,105 @@ class ProfileLayout extends StatelessWidget {
   });
 
   @override
+  State<ProfileLayout> createState() => _ProfileLayoutState();
+}
+
+class _ProfileLayoutState extends State<ProfileLayout> {
+  final supabase = Supabase.instance.client;
+
+  List<ProductModel> favorites = [];
+  bool isLoadingFav = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadFavorites();
+  }
+
+  // =========================
+  // 🔥 LOAD FAVORITES (SAME AS FAVORITES PAGE)
+  // =========================
+  Future<void> loadFavorites() async {
+    final user = supabase.auth.currentUser;
+
+    if (user == null) {
+      setState(() => isLoadingFav = false);
+      return;
+    }
+
+    try {
+      final favs = await supabase
+          .from('favorites')
+          .select('product_id')
+          .eq('user_id', user.id);
+
+      final ids = List<String>.from(
+        favs.map((e) => e['product_id'].toString()),
+      );
+
+      if (ids.isEmpty) {
+        setState(() {
+          favorites = [];
+          isLoadingFav = false;
+        });
+        return;
+      }
+
+      final res = await supabase
+          .from('products')
+          .select('*, shops(*)')
+          .in_('id', ids);
+
+      setState(() {
+        favorites =
+            (res as List)
+                .map((e) => ProductModel.fromMap(e))
+                .toList();
+
+        isLoadingFav = false;
+      });
+    } catch (e) {
+      print("PROFILE FAVORITES ERROR: $e");
+      setState(() => isLoadingFav = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(5),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ===== Colonne paramètres =====
+          // ===== SETTINGS =====
           Expanded(
             flex: 1,
             child: Align(
               alignment: Alignment.topLeft,
               child: ProfileSettings(
-                isSeller: isSeller,
-                updateSeller: updateSeller,
-                logout: logout,
+                isSeller: widget.isSeller,
+                updateSeller: widget.updateSeller,
+                logout: widget.logout,
               ),
             ),
           ),
 
           const SizedBox(width: 8),
 
-          // ===== Colonne infos =====
+          // ===== INFO =====
           Expanded(
             flex: 2,
             child: Align(
               alignment: Alignment.topLeft,
               child: ProfileInfo(
-                avatarUrl: avatarUrl,
-                username: username,
-                email: email,
-                isSeller: isSeller,
-                favorites: const [],
-                bio: bio,
-                updateField: updateField,
-                onAvatarChanged: onAvatarChanged,
+                avatarUrl: widget.avatarUrl,
+                username: widget.username,
+                email: widget.email,
+                bio: widget.bio,
+                isSeller: widget.isSeller,
+                favorites: favorites, // 🔥 IMPORTANT FIX
+                updateField: widget.updateField,
+                onAvatarChanged: widget.onAvatarChanged,
               ),
             ),
           ),

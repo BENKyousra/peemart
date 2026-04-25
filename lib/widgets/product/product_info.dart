@@ -13,6 +13,8 @@ class ProductInfo extends StatefulWidget {
   final String shopAvatar;
   final String shopName;
   final List<Map<String, dynamic>> variants;
+  final bool isFavorite;
+  final VoidCallback onFavoriteToggle;
 
   const ProductInfo({
     super.key,
@@ -22,6 +24,8 @@ class ProductInfo extends StatefulWidget {
     required this.shopAvatar,
     required this.shopName,
     required this.variants,
+    required this.isFavorite,
+    required this.onFavoriteToggle,
   });
 
   @override
@@ -31,6 +35,8 @@ class ProductInfo extends StatefulWidget {
 class _ProductInfoState extends State<ProductInfo> {
   String? selectedColor;
   String? selectedSize;
+  List<ProductModel> favorites = [];
+bool isLoadingFav = true;
 
   @override
   Widget build(BuildContext context) {
@@ -230,15 +236,42 @@ FutureBuilder<int>(
           ),
         ],
 
-        const SizedBox(height: 20),
+const SizedBox(height: 20),
 
-        // 🔥 BOUTON PANIER
-        AddToCartButton(
-          productId: product.id,
-          selectedColor: selectedColor,
-          selectedSize: selectedSize,
-          variantId: selectedVariant.isNotEmpty ? selectedVariant['id'] : null,
-        ),
+Row(
+  children: [
+    // ❤️ FAVORITE
+    Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.grey.shade200,
+      ),
+      child: IconButton(
+  icon: Icon(
+    widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+    color: widget.isFavorite
+        ? const Color.fromARGB(255, 255, 10, 88)
+        : Colors.grey,
+  ),
+  onPressed: widget.onFavoriteToggle,
+),
+    ),
+
+    const SizedBox(width: 10),
+
+    // 🛒 ADD TO CART
+    Expanded(
+      child: AddToCartButton(
+        productId: product.id,
+        selectedColor: selectedColor,
+        selectedSize: selectedSize,
+        variantId: selectedVariant.isNotEmpty
+            ? selectedVariant['id']
+            : null,
+      ),
+    ),
+  ],
+)
       ],
     );
   }

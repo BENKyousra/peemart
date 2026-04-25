@@ -184,7 +184,7 @@ class FeedbackService {
         .select('id')
         .match({
           'feedback_id': feedbackId,
-          'user_id': user.id,
+          'user_id': user.id, 
         });
 
     return (res as List).isNotEmpty;

@@ -16,7 +16,7 @@ class ProductModel {
   final List<String> sizes;
 
   final int reviewCount;
- 
+
   ProductModel({
     required this.id,
     required this.title,
@@ -48,36 +48,37 @@ class ProductModel {
   }
 
   /// 🔥 conversion Supabase PRO
- factory ProductModel.fromMap(Map<String, dynamic> map) {
-  final shop = map['shops'] as Map<String, dynamic>?;
+  factory ProductModel.fromMap(Map<String, dynamic> map) {
+    final shop = map['shops'] as Map<String, dynamic>?;
 
-  return ProductModel(
-    id: map['id']?.toString() ?? '',
-    title: map['title'] ?? '',
-    description: map['description'] ?? '',
-    price: (map['price'] ?? 0).toDouble(),
+    return ProductModel(
+      id: map['id']?.toString() ?? '',
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      price: (map['price'] ?? 0).toDouble(),
 
-    // ⚠️ adapte selon ta DB
-    image: map['image'] ?? '',
+      // ⚠️ adapte selon ta DB
+      image: map['image'] ?? '',
 
-    images: map['product_images'] != null
-        ? List<String>.from(
-            (map['product_images'] as List).map(
-              (img) => img['image_url'] ?? '',
-            ),
-          )
-        : [],
+      images:
+          map['product_images'] != null
+              ? List<String>.from(
+                (map['product_images'] as List).map(
+                  (img) => img['image_url'] ?? '',
+                ),
+              )
+              : [],
 
-    reviewCount: map['review_count'] ?? 0,
+      reviewCount: map['review_count'] ?? 0,
 
-    // 🔥 SHOP CORRECT
-    shopName: shop?['name'] ?? '',
-    shopId: shop?['id']?.toString() ?? '',
-    shopAvatar: shop?['avatar'] ?? '',
-
-    rating: (map['rating'] ?? 0).toDouble(),
-    colors: map['colors'] != null ? List<String>.from(map['colors']) : [],
-    sizes: map['sizes'] != null ? List<String>.from(map['sizes']) : [],
-  );
-}
+      // 🔥 SHOP CORRECT
+      shopName: (shop?['name'] ?? shop?['shop_name'] ?? '').toString(),
+      shopId: shop?['id']?.toString() ?? '',
+      shopAvatar: (shop?['avatar'] ?? shop?['avatar_url'] ?? '').toString(),
+      
+      rating: (map['rating'] ?? 0).toDouble(),
+      colors: map['colors'] != null ? List<String>.from(map['colors']) : [],
+      sizes: map['sizes'] != null ? List<String>.from(map['sizes']) : [],
+    );
+  }
 }

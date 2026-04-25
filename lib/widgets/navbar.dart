@@ -6,6 +6,7 @@ import '../pages/products/cart_page.dart';
 import '../pages/seller_dashboard_page.dart';
 import '../services/notification_service.dart';
 import '../pages/notifications_page.dart';
+import '../pages/favorites_page.dart';
 
 class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
@@ -50,6 +51,7 @@ class _NavBarState extends State<NavBar> {
     "Influenceurs": "/influencers",
     "Feedback": "/feedback",
     "Concours": "/concours",
+    "Favoris": "/favorites",
   };
 
   Future<void> _loadUser() async {
@@ -221,7 +223,15 @@ class _NavBarState extends State<NavBar> {
             );
           },
         ),
-        _iconWithBadge(Icons.favorite, favoritesCount),
+        IconButton(
+          icon: const Icon(Icons.favorite, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FavoritesPage()),
+            );
+          },
+        ),
         IconButton(
           icon: const Icon(Icons.shopping_cart, color: Colors.white),
           onPressed: () {

@@ -22,13 +22,66 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
   List<Map<String, dynamic>> variants = [];
   bool isLoadingVariants = true;
+  bool isFavorite = false;
+  bool isLoadingFavorite = true;
 
   @override
   void initState() {
     super.initState();
     loadVariants();
+    checkFavorite();
   }
 
+  Future<void> checkFavorite() async {
+  final supabase = Supabase.instance.client;
+  final user = supabase.auth.currentUser;
+
+  if (user == null) return;
+
+  final res = await supabase
+      .from('favorites')
+      .select()
+      .eq('user_id', user.id)
+      .eq('product_id', widget.product.id);
+
+  setState(() {
+    isFavorite = res.isNotEmpty;
+    isLoadingFavorite = false;
+  });
+}
+Future<void> toggleFavorite() async {
+  final supabase = Supabase.instance.client;
+  final user = supabase.auth.currentUser;
+
+  if (user == null) return;
+
+  // 🔥 INSTANT UI UPDATE (comme ton feedback)
+  setState(() {
+    isFavorite = !isFavorite;
+  });
+
+  try {
+    if (isFavorite) {
+      await supabase.from('favorites').insert({
+        'user_id': user.id,
+        'product_id': widget.product.id,
+      });
+    } else {
+      await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', widget.product.id);
+    }
+  } catch (e) {
+    print("FAVORITE ERROR: $e");
+
+    // 🔥 rollback si erreur (IMPORTANT)
+    setState(() {
+      isFavorite = !isFavorite;
+    });
+  }
+}
   // 🔥 LOAD VARIANTS FROM DB
   Future<void> loadVariants() async {
     final supabase = Supabase.instance.client;
@@ -128,6 +181,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               shopName: widget.product.shopName,
                               shopAvatar: widget.product.shopAvatar,
                               variants: variants, // 🔥 IMPORTANT
+                              isFavorite: isFavorite,
+                              onFavoriteToggle: toggleFavorite,
                             ),
                           ),
                         ],
@@ -146,6 +201,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                             shopName: widget.product.shopName,
                             shopAvatar: widget.product.shopAvatar,
                             variants: variants, // 🔥 IMPORTANT
+                            isFavorite: isFavorite,
+                            onFavoriteToggle: toggleFavorite,
                           ),
                         ],
                       ),
