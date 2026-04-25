@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:peemart/models/product_model.dart';
+import '../../models/product_model.dart';
 import 'package:peemart/pages/add_post_page.dart';
 import 'comment_page.dart';
 import 'influencer_page.dart';
@@ -257,7 +257,7 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
                                   likedStatus[product['id']] == true
                                       ? Icons.favorite
                                       : Icons.favorite_border,
-                                  color: Colors.red,
+                                  color: Color.fromARGB(255, 255, 10, 88),
                                 ),
                                 onPressed: () async {
                                   setState(() {
@@ -330,7 +330,7 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
                                   Text(
                                     "${product['price']} DA",
                                     style: const TextStyle(
-                                      color: Colors.green,
+                                      color: Color.fromARGB(255, 0, 169, 191),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -343,46 +343,26 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
                                       style: TextStyle(color: Colors.black),
                                     ),
                                     onPressed: () {
+                                      final fixedProduct =
+                                          Map<String, dynamic>.from(product);
+
+                                      final shopData = fixedProduct['shops'];
+
+                                      if (shopData is List &&
+                                          shopData.isNotEmpty) {
+                                        fixedProduct['shops'] = shopData[0];
+                                      }
+
+                                      final productModel = ProductModel.fromMap(
+                                        fixedProduct,
+                                      );
+
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder:
                                               (_) => ProductDetailPage(
-                                                product: ProductModel(
-                                                  id: product['id'].toString(),
-                                                  title: product['title'] ?? '',
-                                                  description:
-                                                      product['description'] ??
-                                                      '',
-                                                  image: getImageUrl(
-                                                    images.first['image_url'],
-                                                  ),
-                                                  images:
-                                                      (images as List)
-                                                          .map(
-                                                            (
-                                                              img,
-                                                            ) => getImageUrl(
-                                                              img['image_url'],
-                                                            ),
-                                                          )
-                                                          .toList(),
-                                                  price:
-                                                      (product['price'] as num?)
-                                                          ?.toDouble() ??
-                                                      0.0,
-                                                  shopId:
-                                                      product['shop_id']
-                                                          .toString(),
-                                                  shopName: "Shop",
-                                                  shopAvatar: "",
-                                                  rating: 4.5,
-                                                  reviewCount:
-                                                      (product['review_count']
-                                                              as num?)
-                                                          ?.toInt() ??
-                                                      0,
-                                                ),
+                                                product: productModel,
                                               ),
                                         ),
                                       );

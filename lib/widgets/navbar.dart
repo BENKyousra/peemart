@@ -47,7 +47,7 @@ class _NavBarState extends State<NavBar> {
     "Accueil": "/home",
     "Dashboard": "/dashboard",
     "Boutiques": "/boutiques",
-    "Influencers": "/influencers",
+    "Influenceurs": "/influencers",
     "Feedback": "/feedback",
     "Concours": "/concours",
   };
@@ -165,22 +165,23 @@ class _NavBarState extends State<NavBar> {
     return Row(
       children: [
         if (isSeller)
-  IconButton(
-    icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => SellerDashboardPage(
-            profile: {
-              "username": username,
-              "avatar_url": avatarUrl,
+          IconButton(
+            icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (_) => SellerDashboardPage(
+                        profile: {
+                          "username": username,
+                          "avatar_url": avatarUrl,
+                        },
+                      ),
+                ),
+              );
             },
           ),
-        ),
-      );
-    },
-  ),
         StreamBuilder<int>(
           stream: notifService.unreadCount(supabase.auth.currentUser!.id),
           builder: (context, snapshot) {
