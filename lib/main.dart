@@ -4,6 +4,8 @@ import 'pages/home_page.dart';
 import 'auth/auth_gate.dart';
 import 'pages/feedback_page.dart';
 import 'pages/concours_page.dart';
+import 'pages/influencer/influenceurs_page.dart';
+import 'pages/admin_dashboard_page.dart';
 
 
 Future<void> main() async {
@@ -31,15 +33,18 @@ class MyApp extends StatelessWidget {
     useMaterial3: true,
   ),
 
-  initialRoute: '/home',
+  initialRoute: '/auth',
   
 
   routes: {
     '/home': (context) => const HomePage(),
     '/auth': (context) => const AuthGate(),
     '/feedback': (context) => const FeedbackPage(),
-    "/concours": (context) => const ConcoursPage(),
+    '/concours': (context) => const ConcoursPage(),
+    '/influencers': (context) => const InfluenceursPage(),
+    '/admin': (context) => const AdminDashboardPage(),
   },
+  
 );
   }
 }

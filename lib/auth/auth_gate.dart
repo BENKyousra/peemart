@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../pages/login_page.dart';
 import '../pages/home_page.dart';
 import '../pages/seller_dashboard_page.dart';
+import '../pages/admin_dashboard_page.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -11,39 +13,61 @@ class AuthGate extends StatelessWidget {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return null;
 
-    final data = await Supabase.instance.client
-        .from('users')
-        .select()
-        .eq('id', user.id)
-        .single();
+    try {
+      final data = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle(); // 🔥 safer than single()
 
-    return data;
+      return data;
+    } catch (e) {
+      debugPrint("ERROR loading profile: $e");
+      return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final session = Supabase.instance.client.auth.currentSession;
 
+    // 🔴 Not logged in
     if (session == null) {
       return const LoginPage();
     }
 
-    return FutureBuilder(
+    return FutureBuilder<Map<String, dynamic>?>(
       future: _getUserProfile(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        // 🔵 Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
 
+        // 🔴 Error or no data
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const LoginPage();
+        }
+
         final profile = snapshot.data!;
 
-        // 🔥 CHECK SELLER
+        debugPrint("PROFILE LOADED => $profile");
+
+        final role = (profile['role'] ?? 'user').toString().toLowerCase();
+
+        // 🔥 1. ADMIN (highest priority)
+        if (role == 'admin') {
+          return const AdminDashboardPage();
+        }
+
+        // 🔥 2. SELLER
         if (profile['is_seller'] == true) {
           return SellerDashboardPage(profile: profile);
         }
 
+        // 🔥 3. NORMAL USER
         return const HomePage();
       },
     );

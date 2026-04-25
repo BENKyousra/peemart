@@ -47,7 +47,7 @@ class _NavBarState extends State<NavBar> {
     "Accueil": "/home",
     "Dashboard": "/dashboard",
     "Boutiques": "/boutiques",
-    "Influenceurs": "/influenceurs",
+    "Influencers": "/influencers",
     "Feedback": "/feedback",
     "Concours": "/concours",
   };

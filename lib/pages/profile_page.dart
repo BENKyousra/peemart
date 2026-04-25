@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'login_page.dart';
-import 'seller_dashboard_page.dart';
 import '../widgets/profile/profile_layout.dart';
 import '../services/profile_service.dart';
 import '../models/profile_model.dart';
