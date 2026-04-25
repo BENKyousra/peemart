@@ -31,8 +31,30 @@ class _CartPageState extends State<CartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Mon Panier")),
-
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color.fromARGB(255, 0, 1, 59),
+                Color.fromARGB(255, 0, 2, 105),
+              ],
+            ),
+          ),
+          child: AppBar(
+            iconTheme: const IconThemeData(color: Colors.white),
+            title: const Text(
+              'Mon Panier',
+              style: TextStyle(fontSize: 22, color: Colors.white),
+            ),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+          ),
+        ),
+      ),
       body: ValueListenableBuilder(
         valueListenable: refreshNotifier,
         builder: (context, value, _) {
