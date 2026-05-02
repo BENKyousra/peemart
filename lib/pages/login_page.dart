@@ -57,7 +57,7 @@ Future<void> _login() async {
         // Ancien utilisateur → créer son enregistrement
         await supabase.from('users').insert({
           'id': user.id,
-          'username': user.email?.split('@').first ?? 'Utilisateur',
+          'username': _usernameController.text.trim(),
           'email': user.email,
           'avatar_url':
               'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg',

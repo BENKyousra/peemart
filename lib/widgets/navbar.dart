@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/login_page.dart';
 import '../pages/profile_page.dart';
+import '../pages/home_page.dart';
 import '../pages/products/cart_page.dart';
 import '../pages/seller_dashboard_page.dart';
 import '../services/notification_service.dart';
@@ -115,21 +116,29 @@ class _NavBarState extends State<NavBar> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Image.asset('assets/images/logo.png', width: 38, height: 38),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'PeeMart',
-                    style: TextStyle(
-                      fontFamily: 'Swansea',
-                      fontSize: 28,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
+             InkWell(
+  onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HomePage()),
+    );
+  },
+  child: Row(
+    children: [
+      Image.asset('assets/images/logo.png', width: 38, height: 38),
+      const SizedBox(width: 8),
+      const Text(
+        'PeeMart',
+        style: TextStyle(
+          fontFamily: 'Swansea',
+          fontSize: 28,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    ],
+  ),
+),
 
               isConnected ? _connectedUI() : _loginButton(),
             ],
@@ -138,9 +147,10 @@ class _NavBarState extends State<NavBar> {
           // 🔥 NAV + SEARCH (disparaissent)
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 300),
-           crossFadeState: widget.scrollOffset > 40
-    ? CrossFadeState.showSecond
-    : CrossFadeState.showFirst,
+            crossFadeState:
+                widget.scrollOffset > 40
+                    ? CrossFadeState.showSecond
+                    : CrossFadeState.showFirst,
             firstChild: Column(
               children: [
                 const SizedBox(height: 20),

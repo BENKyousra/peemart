@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../pages/shop_page.dart';
-import '../services/shop_service.dart';
-import '../widgets/navbar.dart';
+import 'shop_page.dart';
+import '../../services/shop_service.dart';
+import '../../widgets/navbar.dart';
 
 class PlacesPage extends StatefulWidget {
   const PlacesPage({super.key});
@@ -67,9 +67,10 @@ class _PlacesPageState extends State<PlacesPage> {
       loading = true;
     });
 
-    shops = wilaya == "All"
-        ? await _service.getAllShops()
-        : await _service.getShopsByWilaya(wilaya);
+    shops =
+        wilaya == "All"
+            ? await _service.getAllShops()
+            : await _service.getShopsByWilaya(wilaya);
 
     setState(() => loading = false);
   }
@@ -79,10 +80,9 @@ class _PlacesPageState extends State<PlacesPage> {
     if (searchQuery.isEmpty) return shops;
 
     return shops.where((s) {
-      return (s['name'] ?? '')
-          .toString()
-          .toLowerCase()
-          .contains(searchQuery.toLowerCase());
+      return (s['name'] ?? '').toString().toLowerCase().contains(
+        searchQuery.toLowerCase(),
+      );
     }).toList();
   }
 
@@ -101,87 +101,86 @@ class _PlacesPageState extends State<PlacesPage> {
             child: RefreshIndicator(
               onRefresh: loadShops,
 
-              child: loading
-                  ? const Center(child: CircularProgressIndicator())
+              child:
+                  loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ListView(
+                        controller: _scrollController, // 🔥 IMPORTANT
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(12),
 
-                  : ListView(
-                      controller: _scrollController, // 🔥 IMPORTANT
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(12),
+                        children: [
+                          // 🌍 FILTER WILAYA
+                          DropdownButton<String>(
+                            value: selectedWilaya,
+                            isExpanded: true,
+                            dropdownColor: Colors.white,
+                            iconEnabledColor: Colors.blue,
 
-                      children: [
-                        // 🌍 FILTER WILAYA
-                        DropdownButton<String>(
-                          value: selectedWilaya,
-                          isExpanded: true,
-                          dropdownColor: Colors.white,
-                          iconEnabledColor: Colors.blue,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                            ),
 
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontSize: 16,
+                            items:
+                                wilayas.map((w) {
+                                  return DropdownMenuItem(
+                                    value: w,
+                                    child: Text(w),
+                                  );
+                                }).toList(),
+
+                            onChanged: (value) {
+                              if (value != null) {
+                                filterByWilaya(value);
+                              }
+                            },
                           ),
 
-                          items: wilayas.map((w) {
-                            return DropdownMenuItem(
-                              value: w,
-                              child: Text(w),
+                          const SizedBox(height: 10),
+
+                          // 🏪 LIST SHOPS
+                          ...filteredShops.map((shop) {
+                            return Card(
+                              elevation: 2,
+                              color: Colors.white,
+                              margin: const EdgeInsets.symmetric(vertical: 6),
+
+                              child: ListTile(
+                                onTap: () {
+  final id = shop['id'];
+
+  if (id == null) return;
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (_) => ShopPage(shopId: id.toString()),
+    ),
+  );
+},
+                                leading: CircleAvatar(
+                                  backgroundImage:
+                                      shop['avatar'] != null &&
+                                              shop['avatar']
+                                                  .toString()
+                                                  .isNotEmpty
+                                          ? NetworkImage(shop['avatar'])
+                                          : null,
+                                  child:
+                                      shop['avatar'] == null ||
+                                              shop['avatar'].toString().isEmpty
+                                          ? const Icon(Icons.store)
+                                          : null,
+                                ),
+
+                                title: Text(shop['name'] ?? ''),
+                                subtitle: Text("📍 ${shop['location'] ?? ''}"),
+                              ),
                             );
-                          }).toList(),
-
-                          onChanged: (value) {
-                            if (value != null) {
-                              filterByWilaya(value);
-                            }
-                          },
-                        ),
-
-                        const SizedBox(height: 10),
-
-                        // 🏪 LIST SHOPS
-                        ...filteredShops.map((shop) {
-                          return Card(
-                            elevation: 2,
-                            color: Colors.white,
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-
-                            child: ListTile(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        ShopPage(shopId: shop['id']),
-                                  ),
-                                );
-                              },
-
-                              leading: CircleAvatar(
-                                backgroundImage:
-                                    shop['avatar'] != null &&
-                                            shop['avatar']
-                                                .toString()
-                                                .isNotEmpty
-                                        ? NetworkImage(shop['avatar'])
-                                        : null,
-                                child:
-                                    shop['avatar'] == null ||
-                                            shop['avatar']
-                                                .toString()
-                                                .isEmpty
-                                        ? const Icon(Icons.store)
-                                        : null,
-                              ),
-
-                              title: Text(shop['name'] ?? ''),
-                              subtitle: Text(
-                                "📍 ${shop['location'] ?? ''}",
-                              ),
-                            ),
-                          );
-                        }),
-                      ],
-                    ),
+                          }),
+                        ],
+                      ),
             ),
           ),
         ],

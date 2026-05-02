@@ -19,11 +19,14 @@ class ShopModel {
 
   factory ShopModel.fromJson(Map<String, dynamic> json) {
     return ShopModel(
-      id: json['id'],
+      id: json['id'] ?? '',
       name: json['name'] ?? '',
       location: json['location'] ?? '',
-      avatar: json['avatar'],
-      coverImage: json['cover_image'],
+
+      // 🔥 SAFE mapping (important)
+      avatar: json['avatar'] ?? json['avatar'],
+      coverImage: json['cover_image'] ?? json['cover'],
+
       phone: json['phone'],
       email: json['email'],
     );
@@ -39,5 +42,25 @@ class ShopModel {
       'phone': phone,
       'email': email,
     };
+  }
+
+  // 🔥 helper utile
+  ShopModel copyWith({
+    String? name,
+    String? avatar,
+    String? coverImage,
+    String? location,
+    String? phone,
+    String? email,
+  }) {
+    return ShopModel(
+      id: id,
+      name: name ?? this.name,
+      location: location ?? this.location,
+      avatar: avatar ?? this.avatar,
+      coverImage: coverImage ?? this.coverImage,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+    );
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'products/add_product_page.dart';
+import 'dart:typed_data';
+import 'package:image_picker/image_picker.dart';
+
+import '../services/shop_service.dart';
 import '../widgets/dashboard/dashboard_header.dart';
 import '../widgets/dashboard/dashboard_menu.dart';
 import '../widgets/dashboard/products_section.dart';
@@ -7,7 +10,7 @@ import '../widgets/dashboard/orders_section.dart';
 import '../widgets/dashboard/promos_section.dart';
 import '../widgets/dashboard/stats_section.dart';
 import '../widgets/dashboard/delivery_section.dart';
-import '../services/shop_service.dart';
+import 'products/add_product_page.dart';
 
 class SellerDashboardPage extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -19,12 +22,14 @@ class SellerDashboardPage extends StatefulWidget {
 }
 
 class _SellerDashboardPageState extends State<SellerDashboardPage> {
+  final ShopService service = ShopService();
+  final ImagePicker _picker = ImagePicker();
+
   int index = 0;
-
   Map<String, dynamic>? shop;
-  bool isLoadingShop = true;
+  bool loading = true;
 
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController scrollController = ScrollController();
   bool showHeader = true;
 
   @override
@@ -32,106 +37,205 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
     super.initState();
     loadShop();
 
-    // 🔥 écoute du scroll
-    _scrollController.addListener(() {
-      if (_scrollController.offset > 50 && showHeader) {
+    scrollController.addListener(() {
+      if (scrollController.offset > 60 && showHeader) {
         setState(() => showHeader = false);
-      } else if (_scrollController.offset <= 50 && !showHeader) {
+      } else if (scrollController.offset <= 60 && !showHeader) {
         setState(() => showHeader = true);
       }
     });
   }
 
+  // =========================
+  // 🔥 LOAD SHOP
+  // =========================
   Future<void> loadShop() async {
-    final data = await ShopService().getMyShop();
+    final data = await service.getMyShop();
+
+    if (!mounted) return;
 
     setState(() {
       shop = data;
-      isLoadingShop = false;
+      loading = false;
     });
   }
 
+  // =========================
+  // 🔥 SAFE URL
+  // =========================
+  String? _safeUrl(dynamic url) {
+    if (url == null) return null;
+    if (url is! String) return null;
+    if (url.isEmpty) return null;
+    if (!url.startsWith('http')) return null;
+    return url;
+  }
+
+  // =========================
+  // 📸 PICK IMAGE (SAFE)
+  // =========================
+  Future<void> pickImage(Function(Uint8List bytes) onPicked) async {
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    await onPicked(bytes);
+  }
+
+  // =========================
+  // 👤 EDIT AVATAR
+  // =========================
+  Future<void> editAvatar() async {
+    if (shop == null) return;
+
+    await pickImage((bytes) async {
+      await service.uploadShopAvatar(bytes, shop!['id']);
+      await loadShop();
+    });
+  }
+
+  // =========================
+  // 🖼️ EDIT COVER
+  // =========================
+  Future<void> editCover() async {
+    if (shop == null) return;
+
+    await pickImage((bytes) async {
+      await service.uploadShopCover(bytes, shop!['id']);
+      await loadShop();
+    });
+  }
+
+  Future<void> editName() async {
+  if (shop == null) return;
+
+  final controller = TextEditingController(text: shop!['name']);
+
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Modifier le nom"),
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(
+          hintText: "Nom de la boutique",
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Annuler"),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            await service.updateShop(
+              shopId: shop!['id'],
+              name: controller.text,
+            );
+
+            Navigator.pop(context);
+            await loadShop(); // 🔥 refresh
+          },
+          child: const Text("Sauvegarder"),
+        ),
+      ],
+    ),
+  );
+}
+
   @override
   void dispose() {
-    _scrollController.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color.fromARGB(255, 0, 1, 59),
-                Color.fromARGB(255, 0, 2, 105),
-              ],
-            ),
-          ),
-          child: AppBar(
-            iconTheme: const IconThemeData(color: Colors.white),
-            title: const Text(
-              'Tableau de bord',
-              style: TextStyle(fontSize: 22, color: Colors.white),
-            ),
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-          ),
-        ),
+      // =========================
+      // APPBAR
+      // =========================
+      appBar: AppBar(
+        title: const Text("Seller Dashboard"),
+        backgroundColor: const Color.fromARGB(255, 0, 1, 59),
+        foregroundColor: Colors.white,
       ),
 
-      // 🔥 BODY
+      // =========================
+      // BODY
+      // =========================
       body: Column(
         children: [
-          // 🔴 HEADER animé
+          // =========================
+          // HEADER
+          // =========================
           AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: showHeader ? 160 : 0,
+            duration: const Duration(milliseconds: 250),
+            height: showHeader ? 170 : 0,
             child: showHeader
                 ? DashboardHeader(
-                    username: widget.profile['username'] ?? '',
-                    coverUrl: shop?['cover_image'],
-                    avatarUrl: widget.profile['avatar_url'],
+                    shopName: shop?['name'] ?? widget.profile['username'] ?? '',
+                    coverUrl: _safeUrl(shop?['cover_image']),
+                    avatarUrl: _safeUrl(shop?['avatar']),
+                    onEditAvatar: editAvatar,
+                    onEditCover: editCover,
+                    onEditName: editName, 
                   )
                 : null,
           ),
 
-          // 🟢 MENU toujours visible
+          // =========================
+          // MENU
+          // =========================
           DashboardMenu(
             currentIndex: index,
-            onChanged: (i) {
-              setState(() => index = i);
-            },
+            onChanged: (i) => setState(() => index = i),
           ),
 
-          const Divider(),
+          const Divider(height: 1),
 
-          // 📦 CONTENU scrollable
+          // =========================
+          // CONTENT
+          // =========================
           Expanded(
             child: SingleChildScrollView(
-              controller: _scrollController,
-              child: _buildContent(),
+              controller: scrollController,
+              child: loading
+                  ? const Padding(
+                      padding: EdgeInsets.all(30),
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : _buildContent(),
             ),
           ),
         ],
       ),
 
+      // =========================
+      // ADD PRODUCT BUTTON
+      // =========================
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const AddProductPage()),
+            MaterialPageRoute(
+              builder: (_) => const AddProductPage(),
+            ),
           );
         },
         backgroundColor: const Color.fromARGB(255, 0, 2, 105),
-        child: const Icon(Icons.add, color: Colors.white),
+        child: const Icon(Icons.add),
       ),
     );
   }
 
+  // =========================
+  // SECTIONS
+  // =========================
   Widget _buildContent() {
     switch (index) {
       case 0:

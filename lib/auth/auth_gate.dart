@@ -62,10 +62,7 @@ class AuthGate extends StatelessWidget {
           return const AdminDashboardPage();
         }
 
-        // 🔥 2. SELLER
-        if (profile['is_seller'] == true) {
-          return SellerDashboardPage(profile: profile);
-        }
+        
 
         // 🔥 3. NORMAL USER
         return const HomePage();
