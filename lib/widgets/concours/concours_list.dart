@@ -4,7 +4,12 @@ import '../../services/concours_service.dart';
 import 'concours_card.dart';
 
 class ConcoursList extends StatefulWidget {
-  const ConcoursList({super.key});
+  final ScrollController scrollController;
+
+  const ConcoursList({
+    super.key,
+    required this.scrollController,
+  });
 
   @override
   State<ConcoursList> createState() => _ConcoursListState();
@@ -24,6 +29,7 @@ class _ConcoursListState extends State<ConcoursList> {
   Widget build(BuildContext context) {
     return FutureBuilder<List<ConcoursModel>>(
       future: _futureConcours,
+
       builder: (context, snapshot) {
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -41,7 +47,11 @@ class _ConcoursListState extends State<ConcoursList> {
         }
 
         return ListView.builder(
+          controller: widget.scrollController, // 🔥 IMPORTANT
+
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
+
           itemCount: concours.length,
           itemBuilder: (context, index) {
             final c = concours[index];
@@ -49,8 +59,8 @@ class _ConcoursListState extends State<ConcoursList> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: ConcoursCard(
-                id: c.id, // 🔥 IMPORTANT
-                type: c.type, // 🔥 IMPORTANT
+                id: c.id,
+                type: c.type,
                 shopName: c.shopName,
                 avatarUrl: c.avatarUrl ?? "",
                 imageUrl: c.imageUrl ?? "",

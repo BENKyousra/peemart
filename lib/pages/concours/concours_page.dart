@@ -15,10 +15,27 @@ class _ConcoursPageState extends State<ConcoursPage> {
   bool isSeller = false;
   bool loading = true;
 
+  final ScrollController _scrollController = ScrollController();
+  double scrollOffset = 0;
+
   @override
   void initState() {
     super.initState();
+
     loadUserRole();
+
+    // 🔥 CONNECT SCROLL
+    _scrollController.addListener(() {
+      setState(() {
+        scrollOffset = _scrollController.offset;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> loadUserRole() async {
@@ -49,7 +66,7 @@ class _ConcoursPageState extends State<ConcoursPage> {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 245, 246, 250),
 
-      // 🔥 FLOATING BUTTON CONDITIONNEL
+      // 🔥 FLOATING BUTTON
       floatingActionButton: loading
           ? null
           : isSeller
@@ -68,9 +85,16 @@ class _ConcoursPageState extends State<ConcoursPage> {
               : null,
 
       body: Column(
-        children: const [
-          NavBar(),
-          Expanded(child: ConcoursList()),
+        children: [
+          // 🔥 NAVBAR CONNECTÉ AU SCROLL
+          NavBar(scrollOffset: scrollOffset),
+
+          // 📦 LISTE
+          Expanded(
+            child: ConcoursList(
+              scrollController: _scrollController,
+            ),
+          ),
         ],
       ),
     );

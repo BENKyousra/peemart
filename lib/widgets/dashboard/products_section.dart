@@ -52,6 +52,8 @@ class _ProductsSectionState extends State<ProductsSection> {
     }
 
     return ListView.builder(
+       shrinkWrap: true, // ✅ IMPORTANT
+  physics: const NeverScrollableScrollPhysics(), // ✅ IMPORTANT
       itemCount: products.length,
       itemBuilder: (context, i) {
         final p = products[i];

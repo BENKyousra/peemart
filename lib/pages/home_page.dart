@@ -16,13 +16,19 @@ class _HomePageState extends State<HomePage> {
   List<ProductModel> recentProducts = [];
   List<ProductModel> popularProducts = [];
   List<ProductModel> sponsoredProducts = [];
-
+  final ScrollController _scrollController = ScrollController();
+  double scrollOffset = 0;
   bool isLoading = true;
   bool isSeller = false;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(() {
+    setState(() {
+      scrollOffset = _scrollController.offset;
+    });
+  });
     loadData();
   }
 
@@ -102,58 +108,62 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
+ @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.white,
 
-      body: Column(
-        children: [
-          const NavBar(),
- 
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: loadData, // 🔥 refresh global
+    body: Column(
+      children: [
+        // 🔥 NAVBAR CONNECTÉ AU SCROLL
+        NavBar(scrollOffset: scrollOffset),
 
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Column(
-                          children: [
-                            _buildSection(
-                              context,
-                              title: 'Nouveautés',
-                              icon: Icons.new_releases,
-                              products: recentProducts,
-                            ),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: loadData,
 
-                            _buildSection(
-                              context,
-                              title: 'Sponsorisé',
-                              icon: Icons.star,
-                              products: sponsoredProducts,
-                            ),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
 
-                            _buildSection(
-                              context,
-                              title: 'Les plus populaires',
-                              icon: Icons.whatshot,
-                              products: popularProducts,
-                            ),
-                          ],
-                        ),
+                : SingleChildScrollView(
+                    controller: _scrollController, // 🔥 IMPORTANT
+                    physics: const AlwaysScrollableScrollPhysics(),
+
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+
+                      child: Column(
+                        children: [
+                          _buildSection(
+                            context,
+                            title: 'Nouveautés',
+                            icon: Icons.new_releases,
+                            products: recentProducts,
+                          ),
+
+                          _buildSection(
+                            context,
+                            title: 'Sponsorisé',
+                            icon: Icons.star,
+                            products: sponsoredProducts,
+                          ),
+
+                          _buildSection(
+                            context,
+                            title: 'Les plus populaires',
+                            icon: Icons.whatshot,
+                            products: popularProducts,
+                          ),
+                        ],
                       ),
                     ),
-            ),
+                  ),
           ),
-        ],
-      ),
-    );
-  }
-
+        ),
+      ],
+    ),
+  );
+}
   // ===== SECTION BUILDER =====
   Widget _buildSection(
     BuildContext context, {

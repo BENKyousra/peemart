@@ -6,6 +6,7 @@ import '../widgets/dashboard/products_section.dart';
 import '../widgets/dashboard/orders_section.dart';
 import '../widgets/dashboard/promos_section.dart';
 import '../widgets/dashboard/stats_section.dart';
+import '../widgets/dashboard/delivery_section.dart';
 import '../services/shop_service.dart';
 
 class SellerDashboardPage extends StatefulWidget {
@@ -23,10 +24,22 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
   Map<String, dynamic>? shop;
   bool isLoadingShop = true;
 
+  final ScrollController _scrollController = ScrollController();
+  bool showHeader = true;
+
   @override
   void initState() {
     super.initState();
     loadShop();
+
+    // 🔥 écoute du scroll
+    _scrollController.addListener(() {
+      if (_scrollController.offset > 50 && showHeader) {
+        setState(() => showHeader = false);
+      } else if (_scrollController.offset <= 50 && !showHeader) {
+        setState(() => showHeader = true);
+      }
+    });
   }
 
   Future<void> loadShop() async {
@@ -39,6 +52,12 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
   }
 
   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
@@ -46,8 +65,6 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
         child: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
               colors: [
                 Color.fromARGB(255, 0, 1, 59),
                 Color.fromARGB(255, 0, 2, 105),
@@ -58,7 +75,7 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
             iconTheme: const IconThemeData(color: Colors.white),
             title: const Text(
               'Tableau de bord',
-              style: TextStyle(fontSize: 28, color: Colors.white),
+              style: TextStyle(fontSize: 22, color: Colors.white),
             ),
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -66,13 +83,23 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
         ),
       ),
 
+      // 🔥 BODY
       body: Column(
         children: [
-          DashboardHeader(
-            username: widget.profile['username'] ?? '',
-            coverUrl: shop?['cover_image'],
-            avatarUrl: widget.profile['avatar_url'],
+          // 🔴 HEADER animé
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: showHeader ? 160 : 0,
+            child: showHeader
+                ? DashboardHeader(
+                    username: widget.profile['username'] ?? '',
+                    coverUrl: shop?['cover_image'],
+                    avatarUrl: widget.profile['avatar_url'],
+                  )
+                : null,
           ),
+
+          // 🟢 MENU toujours visible
           DashboardMenu(
             currentIndex: index,
             onChanged: (i) {
@@ -82,7 +109,13 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
 
           const Divider(),
 
-          Expanded(child: _buildContent()),
+          // 📦 CONTENU scrollable
+          Expanded(
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: _buildContent(),
+            ),
+          ),
         ],
       ),
 
@@ -108,6 +141,8 @@ class _SellerDashboardPageState extends State<SellerDashboardPage> {
       case 2:
         return const PromosSection();
       case 3:
+        return const DeliverySection();
+      case 4:
         return const StatsSection();
       default:
         return const SizedBox();

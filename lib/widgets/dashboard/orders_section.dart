@@ -27,54 +27,52 @@ class _OrdersSectionState extends State<OrdersSection> {
 
   // 🔥 UPDATE STATUS
   Future<void> updateStatus(String orderId, String status) async {
-  // 1. update order
-  await supabase
-      .from('orders')
-      .update({'status': status})
-      .eq('id', orderId);
+    // 1. update order
+    await supabase.from('orders').update({'status': status}).eq('id', orderId);
 
-  // 2. get user_id of order
-  final order = await supabase
-      .from('orders')
-      .select('user_id')
-      .eq('id', orderId)
-      .single();
+    // 2. get user_id of order
+    final order =
+        await supabase
+            .from('orders')
+            .select('user_id')
+            .eq('id', orderId)
+            .single();
 
-  final userId = order['user_id'];
+    final userId = order['user_id'];
 
-  // 3. message dynamique selon status
-  String title = "Commande mise à jour";
-  String body = "";
+    // 3. message dynamique selon status
+    String title = "Commande mise à jour";
+    String body = "";
 
-  switch (status) {
-    case 'confirmed':
-      body = "Votre commande a été confirmée ✅";
-      break;
-    case 'shipped':
-      body = "Votre commande a été expédiée 🚚";
-      break;
-    case 'delivered':
-      body = "Votre commande est livrée 📦";
-      break;
-    case 'cancelled':
-      body = "Votre commande a été annulée ❌";
-      break;
-    default:
-      body = "Statut mis à jour : $status";
+    switch (status) {
+      case 'confirmed':
+        body = "Votre commande a été confirmée ✅";
+        break;
+      case 'shipped':
+        body = "Votre commande a été expédiée 🚚";
+        break;
+      case 'delivered':
+        body = "Votre commande est livrée 📦";
+        break;
+      case 'cancelled':
+        body = "Votre commande a été annulée ❌";
+        break;
+      default:
+        body = "Statut mis à jour : $status";
+    }
+
+    // 4. insert notification
+    await supabase.from('notifications').insert({
+      'user_id': userId,
+      'title': title,
+      'body': body,
+    });
+
+    // 5. refresh UI
+    setState(() {
+      orders = service.getOrders();
+    });
   }
-
-  // 4. insert notification
-  await supabase.from('notifications').insert({
-    'user_id': userId,
-    'title': title,
-    'body': body,
-  });
-
-  // 5. refresh UI
-  setState(() {
-    orders = service.getOrders();
-  });
-}
 
   // 🔥 COLOR STATUS
   Color getStatusColor(String status) {
@@ -96,42 +94,45 @@ class _OrdersSectionState extends State<OrdersSection> {
 
   // 🔥 FILTER CHIP
   Widget filterChip(String status) {
-  final isSelected = selectedFilter == status.toLowerCase();
+    final isSelected = selectedFilter == status.toLowerCase();
 
-  return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 5),
-    child: ChoiceChip(
-      label: Text(
-        status,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.black87,
-          fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      child: ChoiceChip(
+        label: Text(
+          status,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+
+        selected: isSelected,
+
+        onSelected: (value) {
+          setState(() {
+            selectedFilter = status.toLowerCase();
+          });
+        },
+
+        // 🎨 COLORS
+        selectedColor: Color.fromARGB(255, 0, 169, 191),
+        backgroundColor: Colors.grey.shade200,
+        labelStyle: const TextStyle(color: Colors.black),
+
+        // bordure (optionnel mais pro)
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color:
+                isSelected
+                    ? Color.fromARGB(255, 0, 169, 191)
+                    : Colors.grey.shade300,
+          ),
         ),
       ),
-
-      selected: isSelected,
-
-      onSelected: (value) {
-        setState(() {
-          selectedFilter = status.toLowerCase();
-        });
-      },
-
-      // 🎨 COLORS
-      selectedColor: Color.fromARGB(255, 0, 169, 191),
-      backgroundColor: Colors.grey.shade200,
-      labelStyle: const TextStyle(color: Colors.black),
-
-      // bordure (optionnel mais pro)
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-        side: BorderSide(
-          color: isSelected ? Color.fromARGB(255, 0, 169, 191): Colors.grey.shade300,
-        ),
-      ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,11 +148,12 @@ class _OrdersSectionState extends State<OrdersSection> {
         }
 
         // 🔥 FILTER LOGIC
-        final data = selectedFilter == 'all'
-            ? snapshot.data!
-            : snapshot.data!
-                .where((o) => o.status == selectedFilter)
-                .toList();
+        final data =
+            selectedFilter == 'all'
+                ? snapshot.data!
+                : snapshot.data!
+                    .where((o) => o.status == selectedFilter)
+                    .toList();
 
         return Column(
           children: [
@@ -172,9 +174,9 @@ class _OrdersSectionState extends State<OrdersSection> {
               ),
             ),
 
-            // 🔥 LIST
-            Expanded(
-              child: ListView.builder(
+            ListView.builder(
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
                 itemCount: data.length,
                 itemBuilder: (context, index) {
                   final order = data[index];
@@ -182,7 +184,9 @@ class _OrdersSectionState extends State<OrdersSection> {
                   return Card(
                     elevation: 3,
                     margin: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 8),
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -224,48 +228,51 @@ class _OrdersSectionState extends State<OrdersSection> {
 
                           // 🔥 ACTION BUTTONS
                           Wrap(
-  spacing: 8,
-  children: [
-    if (order.status == 'pending')
-      ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        onPressed: () => updateStatus(order.id, 'confirmed'),
-        child: const Text("Confirm"),
-      ),
+                            spacing: 8,
+                            children: [
+                              if (order.status == 'pending')
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.orange,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed:
+                                      () => updateStatus(order.id, 'confirmed'),
+                                  child: const Text("Confirm"),
+                                ),
 
-    if (order.status == 'confirmed')
-      ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        onPressed: () => updateStatus(order.id, 'shipped'),
-        child: const Text("Ship"),
-      ),
+                              if (order.status == 'confirmed')
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.blue,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed:
+                                      () => updateStatus(order.id, 'shipped'),
+                                  child: const Text("Ship"),
+                                ),
 
-    if (order.status == 'shipped')
-      ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.purple,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        onPressed: () => updateStatus(order.id, 'delivered'),
-        child: const Text("Deliver"),
-      ),
-  ],
-),
+                              if (order.status == 'shipped')
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.purple,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed:
+                                      () => updateStatus(order.id, 'delivered'),
+                                  child: const Text("Deliver"),
+                                ),
+                            ],
+                          ),
 
                           // 🔥 DETAILS BUTTON
                           Align(
@@ -275,13 +282,18 @@ class _OrdersSectionState extends State<OrdersSection> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        OrderDetailsPage(
-                                            orderId: order.id),
+                                    builder:
+                                        (context) =>
+                                            OrderDetailsPage(orderId: order.id),
                                   ),
                                 );
                               },
-                              child: const Text("Voir détails →",style: TextStyle(color: Color.fromARGB(255, 0, 169, 191)),),
+                              child: const Text(
+                                "Voir détails →",
+                                style: TextStyle(
+                                  color: Color.fromARGB(255, 0, 169, 191),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -290,7 +302,7 @@ class _OrdersSectionState extends State<OrdersSection> {
                   );
                 },
               ),
-            ),
+            
           ],
         );
       },

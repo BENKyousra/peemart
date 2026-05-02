@@ -27,10 +27,18 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
   bool isLoading = true;
   bool isInfluencer = false;
 
+  final ScrollController _scrollController = ScrollController();
+  double scrollOffset = 0;
+
   @override
   void initState() {
     super.initState();
     initPage();
+     _scrollController.addListener(() {
+    setState(() {
+      scrollOffset = _scrollController.offset;
+    });
+  });
   }
 
   Future<void> initPage() async {
@@ -95,7 +103,7 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
 
       body: Column(
         children: [
-          const NavBar(),
+          const NavBar(scrollOffset: 0.0),
 
           Expanded(
             child: ListView.builder(

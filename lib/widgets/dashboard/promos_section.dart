@@ -24,13 +24,13 @@ class _PromosSectionState extends State<PromosSection> {
     initData();
   }
 
-  // 🔥 récupérer shopId + promos
+  // 🔥 INIT DATA
   Future<void> initData() async {
     await fetchShopId();
     await fetchPromos();
   }
 
-  // 🔐 récupérer shop du vendeur connecté
+  // 🔐 GET SHOP ID
   Future<void> fetchShopId() async {
     final userId = supabase.auth.currentUser!.id;
 
@@ -43,7 +43,7 @@ class _PromosSectionState extends State<PromosSection> {
     shopId = shop['id'];
   }
 
-  // 🔥 promos filtrées par boutique
+  // 🔥 GET PROMOS
   Future<void> fetchPromos() async {
     setState(() => isLoading = true);
 
@@ -61,11 +61,13 @@ class _PromosSectionState extends State<PromosSection> {
     setState(() => isLoading = false);
   }
 
+  // 🗑 DELETE PROMO
   Future<void> deletePromo(String id) async {
     await supabase.from('promotions').delete().eq('id', id);
     fetchPromos();
   }
 
+  // ⏳ CHECK EXPIRATION
   bool isExpired(PromoModel promo) {
     if (promo.expiresAt == null) return false;
     return DateTime.now().isAfter(promo.expiresAt!);
@@ -78,78 +80,81 @@ class _PromosSectionState extends State<PromosSection> {
     }
 
     return Column(
-      children: [ElevatedButton(
-  onPressed: shopId == null
-      ? null
-      : () async {
-          await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddPromoPage(
-                shopId: shopId!, // ✅ correct
-              ),
+      children: [
+        // 🔥 BUTTON AJOUT PROMO
+        ElevatedButton(
+          onPressed: shopId == null
+              ? null
+              : () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => AddPromoPage(shopId: shopId!),
+                    ),
+                  );
+                  fetchPromos();
+                },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 0, 169, 191),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 12,
             ),
-          );
-          fetchPromos();
-        },
-
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Color.fromARGB(255, 0, 169, 191),
-    foregroundColor: Colors.white,
-    padding: const EdgeInsets.symmetric(
-      horizontal: 20,
-      vertical: 12,
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
-    ),
-    elevation: 3,
-  ),
-
-  child: const Text(
-    "Ajouter Promotion",
-    style: TextStyle(
-      fontWeight: FontWeight.w600,
-    ),
-  ),
-),
-
-        Expanded(
-          child: promos.isEmpty
-              ? const Center(child: Text("Aucune promotion"))
-              : ListView.builder(
-                  itemCount: promos.length,
-                  itemBuilder: (context, index) {
-                    final promo = promos[index];
-
-                    return Card(
-                      child: ListTile(
-                        title: Text("${promo.code} - ${promo.discount}%"),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text("Usage: ${promo.usedCount}/${promo.maxUsage}"),
-                            Text(
-                              isExpired(promo)
-                                  ? "Expiré"
-                                  : "Actif",
-                              style: TextStyle(
-                                color: isExpired(promo)
-                                    ? Color.fromARGB(255, 255, 10, 88)
-                                    : Colors.green,
-                              ),
-                            ),
-                          ],
-                        ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Color.fromARGB(255, 255, 10, 88)),
-                          onPressed: () => deletePromo(promo.id),
-                        ),
-                      ),
-                    );
-                  },
-                ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            elevation: 3,
+          ),
+          child: const Text(
+            "Ajouter Promotion",
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
+
+        const SizedBox(height: 10),
+
+        // 🔥 LIST PROMOS (IMPORTANT FIX SCROLL)
+        promos.isEmpty
+            ? const Padding(
+                padding: EdgeInsets.all(20),
+                child: Text("Aucune promotion"),
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: promos.length,
+                itemBuilder: (context, index) {
+                  final promo = promos[index];
+
+                  return Card(
+                    child: ListTile(
+                      title: Text("${promo.code} - ${promo.discount}%"),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Usage: ${promo.usedCount}/${promo.maxUsage}"),
+                          Text(
+                            isExpired(promo) ? "Expiré" : "Actif",
+                            style: TextStyle(
+                              color: isExpired(promo)
+                                  ? const Color.fromARGB(255, 255, 10, 88)
+                                  : Colors.green,
+                            ),
+                          ),
+                        ],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Color.fromARGB(255, 255, 10, 88),
+                        ),
+                        onPressed: () => deletePromo(promo.id),
+                      ),
+                    ),
+                  );
+                },
+              ),
       ],
     );
   }

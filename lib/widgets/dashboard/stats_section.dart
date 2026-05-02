@@ -304,62 +304,70 @@ class _StatsSectionState extends State<StatsSection> {
 
     return RefreshIndicator(
       onRefresh: loadStats,
-      child: ListView(
+
+      // 🔥 IMPORTANT: SingleChildScrollView remplace ListView
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(12),
-        children: [
-          statCard("Produits", "$productsCount", Icons.shopping_bag),
-          statCard("Commandes", "$ordersCount", Icons.receipt),
-          statCard(
-            "Revenus",
-            "${totalRevenue.toStringAsFixed(0)} DA",
-            Icons.monetization_on,
-          ),
-          statCard("Promotions", "$promosCount", Icons.local_offer),
 
-          const SizedBox(height: 30),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            statCard("Produits", "$productsCount", Icons.shopping_bag),
+            statCard("Commandes", "$ordersCount", Icons.receipt),
+            statCard(
+              "Revenus",
+              "${totalRevenue.toStringAsFixed(0)} DA",
+              Icons.monetization_on,
+            ),
+            statCard("Promotions", "$promosCount", Icons.local_offer),
 
-          Row(
-            children: const [
-              Icon(
-                Icons.monetization_on,
-                color: Color.fromARGB(255, 0, 2, 105),
-              ),
-              SizedBox(width: 8),
-              Text(
-                "Revenus",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+            const SizedBox(height: 30),
+
+            Row(
+              children: const [
+                Icon(
+                  Icons.monetization_on,
                   color: Color.fromARGB(255, 0, 2, 105),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          revenueChart(),
-
-          const SizedBox(height: 30),
-          Row(
-            children: const [
-              Icon(
-                Icons.whatshot,
-                color: Color.fromARGB(255, 0, 2, 105),
-              ),
-              SizedBox(width: 8),
-              Text(
-                "Meilleurs produits",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color.fromARGB(255, 0, 2, 105),
+                SizedBox(width: 8),
+                Text(
+                  "Revenus",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 0, 2, 105),
+                  ),
                 ),
-              ),
-            ],
-          ),
-         const SizedBox(height: 10), 
-          bestProductsWidget(),
-        ],
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            revenueChart(),
+
+            const SizedBox(height: 30),
+
+            Row(
+              children: const [
+                Icon(Icons.whatshot, color: Color.fromARGB(255, 0, 2, 105)),
+                SizedBox(width: 8),
+                Text(
+                  "Meilleurs produits",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 0, 2, 105),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            bestProductsWidget(),
+          ],
+        ),
       ),
     );
   }

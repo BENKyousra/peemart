@@ -10,8 +10,9 @@ import '../pages/favorites_page.dart';
 
 class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
+  final double scrollOffset;
 
-  const NavBar({super.key, this.onSearch});
+  const NavBar({super.key, this.onSearch, required this.scrollOffset});
 
   @override
   State<NavBar> createState() => _NavBarState();
@@ -105,10 +106,12 @@ class _NavBarState extends State<NavBar> {
           ],
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // 🔵 TOP BAR (toujours visible)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -127,36 +130,56 @@ class _NavBarState extends State<NavBar> {
                   ),
                 ],
               ),
+
               isConnected ? _connectedUI() : _loginButton(),
             ],
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _navButton('Accueil'),
-              _navButton('Places'),
-              _navButton('Influenceurs'),
-              _navButton('Feedback'),
-              _navButton('Concours'),
-            ],
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            child: TextField(
-              onSubmitted: widget.onSearch,
-              decoration: const InputDecoration(
-                hintText: 'Rechercher un produit ou une boutique...',
-                prefixIcon: Icon(Icons.search),
-                fillColor: Colors.white,
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                  borderSide: BorderSide.none,
+
+          // 🔥 NAV + SEARCH (disparaissent)
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 300),
+           crossFadeState: widget.scrollOffset > 40
+    ? CrossFadeState.showSecond
+    : CrossFadeState.showFirst,
+            firstChild: Column(
+              children: [
+                const SizedBox(height: 20),
+
+                // NAVIGATION
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _navButton('Accueil'),
+                    _navButton('Places'),
+                    _navButton('Influenceurs'),
+                    _navButton('Feedback'),
+                    _navButton('Concours'),
+                  ],
                 ),
-              ),
+
+                const SizedBox(height: 15),
+
+                // SEARCH
+                SizedBox(
+                  width: double.infinity,
+                  child: TextField(
+                    onSubmitted: widget.onSearch,
+                    decoration: const InputDecoration(
+                      hintText: 'Rechercher un produit ou une boutique...',
+                      prefixIcon: Icon(Icons.search),
+                      fillColor: Colors.white,
+                      filled: true,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
+
+            secondChild: const SizedBox(height: 0),
           ),
         ],
       ),

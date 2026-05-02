@@ -16,12 +16,10 @@ class _CartPageState extends State<CartPage> {
   final refreshNotifier = ValueNotifier(0);
   final promoService = PromoService();
 
-  // ✅ controllers par item
   final Map<String, TextEditingController> promoControllers = {};
 
   @override
   void dispose() {
-    // 🔥 éviter memory leak
     for (var controller in promoControllers.values) {
       controller.dispose();
     }
@@ -74,18 +72,29 @@ class _CartPageState extends State<CartPage> {
 
                   final items = snap.data!;
 
-                  double total = 0;
-
+                  double subtotal = 0;
                   for (var item in items) {
                     double itemTotal = item.price * item.quantity;
-
-                    // ✅ CORRECTION DISCOUNT
                     if (item.discount > 0) {
                       itemTotal =
                           itemTotal - (itemTotal * (item.discount / 100));
                     }
+                    subtotal += itemTotal;
+                  }
 
-                    total += itemTotal;
+                  if (items.isEmpty) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.shopping_cart_outlined,
+                              size: 70, color: Colors.grey),
+                          SizedBox(height: 12),
+                          Text('Votre panier est vide',
+                              style: TextStyle(color: Colors.grey)),
+                        ],
+                      ),
+                    );
                   }
 
                   return Column(
@@ -102,19 +111,26 @@ class _CartPageState extends State<CartPage> {
 
                             return Card(
                               margin: const EdgeInsets.all(10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                               child: Padding(
                                 padding: const EdgeInsets.all(10),
                                 child: Column(
                                   children: [
                                     Row(
                                       children: [
-                                        Image.network(
-                                          item.imageUrl,
-                                          width: 80,
-                                          height: 80,
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.network(
+                                            item.imageUrl,
+                                            width: 80,
+                                            height: 80,
+                                            fit: BoxFit.cover,
+                                          ),
                                         ),
                                         const SizedBox(width: 10),
-
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
@@ -126,17 +142,16 @@ class _CartPageState extends State<CartPage> {
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              Text("${item.price} DA"),
-
+                                              Text("${item.price} DA",
+                                                  style: const TextStyle(
+                                                      color: Color.fromARGB(
+                                                          255, 0, 169, 191))),
                                               if (item.selectedColor != null)
                                                 Text(
-                                                  "Couleur: ${item.selectedColor}",
-                                                ),
-
+                                                    "Couleur: ${item.selectedColor}"),
                                               if (item.selectedSize != null)
                                                 Text(
-                                                  "Taille: ${item.selectedSize}",
-                                                ),
+                                                    "Taille: ${item.selectedSize}"),
                                             ],
                                           ),
                                         ),
@@ -153,13 +168,12 @@ class _CartPageState extends State<CartPage> {
                                             controller: promoController,
                                             decoration:
                                                 const InputDecoration(
-                                              hintText:
-                                                  "Code promo produit",
+                                              hintText: "Code promo produit",
                                               border: OutlineInputBorder(),
+                                              isDense: true,
                                             ),
                                           ),
                                         ),
-
                                         IconButton(
                                           icon: const Icon(Icons.check),
                                           onPressed: item.discount > 0
@@ -168,61 +182,48 @@ class _CartPageState extends State<CartPage> {
                                                   String code =
                                                       promoController.text
                                                           .trim();
-
                                                   if (code.isEmpty) {
                                                     ScaffoldMessenger.of(
                                                             context)
                                                         .showSnackBar(
                                                       const SnackBar(
-                                                        content: Text(
-                                                            "Entrer un code"),
-                                                      ),
+                                                          content: Text(
+                                                              "Entrer un code")),
                                                     );
                                                     return;
                                                   }
-
                                                   final promo =
                                                       await promoService
                                                           .validatePromo(
-                                                    productId:
-                                                        item.productId,
+                                                    productId: item.productId,
                                                     code: code,
                                                   );
-
                                                   if (promo == null) {
                                                     ScaffoldMessenger.of(
                                                             context)
                                                         .showSnackBar(
                                                       const SnackBar(
-                                                        content: Text(
-                                                            "Code invalide ❌"),
-                                                      ),
+                                                          content: Text(
+                                                              "Code invalide ❌")),
                                                     );
                                                     return;
                                                   }
-
                                                   await cartService
                                                       .applyPromoToItem(
                                                     itemId: item.id,
                                                     code: code,
-                                                    discount:
-                                                        promo.discount,
+                                                    discount: promo.discount,
                                                   );
-
                                                   await promoService
-                                                      .incrementUsage(
-                                                          promo.id);
-
+                                                      .incrementUsage(promo.id);
                                                   ScaffoldMessenger.of(
                                                           context)
                                                       .showSnackBar(
                                                     SnackBar(
                                                       content: Text(
-                                                        "Promo appliquée (-${promo.discount}%) ✅",
-                                                      ),
+                                                          "Promo appliquée (-${promo.discount}%) ✅"),
                                                     ),
                                                   );
-
                                                   refreshNotifier.value++;
                                                 },
                                         ),
@@ -233,8 +234,7 @@ class _CartPageState extends State<CartPage> {
                                       Text(
                                         "-${item.discount.toInt()}% appliqué",
                                         style: const TextStyle(
-                                          color: Colors.green,
-                                        ),
+                                            color: Colors.green),
                                       ),
 
                                     const SizedBox(height: 10),
@@ -249,9 +249,7 @@ class _CartPageState extends State<CartPage> {
                                           onPressed: () {
                                             if (item.quantity > 1) {
                                               cartService.updateQuantity(
-                                                item.id,
-                                                item.quantity - 1,
-                                              );
+                                                  item.id, item.quantity - 1);
                                             }
                                           },
                                         ),
@@ -260,16 +258,15 @@ class _CartPageState extends State<CartPage> {
                                           icon: const Icon(Icons.add),
                                           onPressed: () {
                                             cartService.updateQuantity(
-                                              item.id,
-                                              item.quantity + 1,
-                                            );
+                                                item.id, item.quantity + 1);
                                           },
                                         ),
                                         IconButton(
-                                          icon: const Icon(Icons.delete),
+                                          icon: const Icon(Icons.delete,
+                                              color: Colors.red),
                                           onPressed: () async {
-                                            await cartService.removeItem(
-                                                item.id);
+                                            await cartService
+                                                .removeItem(item.id);
                                             refreshNotifier.value++;
                                           },
                                         ),
@@ -283,17 +280,20 @@ class _CartPageState extends State<CartPage> {
                         ),
                       ),
 
-                      // 🔥 TOTAL
+                      // 🔥 TOTAL + CHECKOUT
                       Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             Text(
-                              "Total: ${total.toStringAsFixed(0)} DA",
+                              "Sous-total: ${subtotal.toStringAsFixed(0)} DA",
                               style: const TextStyle(fontSize: 20),
                             ),
                             const SizedBox(height: 10),
+                            // ✅ CheckoutButton mis à jour avec items + subtotal
                             CheckoutButton(
+                              cartItems: items,
+                              subtotal: subtotal,
                               onSuccess: () {
                                 refreshNotifier.value++;
                               },
