@@ -19,16 +19,23 @@ class _InfluencerInfoState extends State<InfluencerInfo> {
     fetchInfluencer();
   }
 
-  
-
   Future<void> fetchInfluencer() async {
-    final data = await Supabase.instance.client
-        .from('influencers')
-        .select()
-        .eq('id', widget.influencerId)
-        .single();
+    final data =
+        await Supabase.instance.client
+            .from('influencers')
+            .select()
+            .eq('id', widget.influencerId)
+            .single();
 
     setState(() => influencer = data);
+  }
+
+  String _formatFollowers(dynamic count) {
+    if (count == null) return '';
+    final n = (count as num).toInt();
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M 👥';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(0)}K 👥';
+    return '$n 👥';
   }
 
   @override
@@ -41,12 +48,12 @@ class _InfluencerInfoState extends State<InfluencerInfo> {
         children: [
           CircleAvatar(
             radius: 30,
-            backgroundImage: influencer!['avatar'] != null
-                ? NetworkImage(influencer!['avatar'])
-                : null,
-            child: influencer!['avatar'] == null
-                ? const Icon(Icons.person)
-                : null,
+            backgroundImage:
+                influencer!['avatar'] != null
+                    ? NetworkImage(influencer!['avatar'])
+                    : null,
+            child:
+                influencer!['avatar'] == null ? const Icon(Icons.person) : null,
           ),
 
           const SizedBox(width: 15),
@@ -63,15 +70,24 @@ class _InfluencerInfoState extends State<InfluencerInfo> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
                   if (influencer!['is_verified'] == true)
                     const Padding(
                       padding: EdgeInsets.only(left: 5),
-                      child: Icon(Icons.verified,
-                          color: Colors.blue, size: 16),
+                      child: Icon(Icons.verified, color: Colors.blue, size: 16),
                     ),
                 ],
               ),
+
+              // 🔥 عدد المشتركين
+              if ((influencer!['followers_count'] ?? 0) > 0)
+                Text(
+                  'Followers: ${_formatFollowers(influencer!['followers_count'])}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 0, 169, 191),
+                  ),
+                ),
 
               const SizedBox(height: 5),
 

@@ -6,7 +6,7 @@ import 'comment_page.dart';
 import 'influencer_page.dart';
 import 'package:peemart/pages/products/product_detail_page.dart';
 import 'package:peemart/services/post_service.dart';
-import 'product_service.dart';
+import '../../services/influencer/product_service.dart';
 import 'package:peemart/pages/gallery_page.dart';
 import '../../widgets/navbar.dart';
 
@@ -27,7 +27,7 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
   bool isLoading = true;
   bool isInfluencer = false;
 
-  final ScrollController _scrollController = ScrollController();
+   final ScrollController _scrollController = ScrollController();
   double scrollOffset = 0;
 
   @override
@@ -35,15 +35,14 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
     super.initState();
     initPage();
      _scrollController.addListener(() {
-    setState(() {
-      scrollOffset = _scrollController.offset;
+      setState(() {
+        scrollOffset = _scrollController.offset;
+      });
     });
-  });
   }
 
   Future<void> initPage() async {
-    await checkInfluencer();
-    await loadData();
+    await Future.wait([checkInfluencer(), loadData()]);
   }
 
   Future<void> checkInfluencer() async {
@@ -54,35 +53,39 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
   Future<void> loadData() async {
     final data = await PostService().getPosts();
 
+    // 🔥 اعرض المنشورات فوراً بدون انتظار الـ likes
+    setState(() {
+      posts = data;
+      isLoading = false; // ✅ الصفحة تظهر هنا
+    });
+
+    // 🔥 حمّل الـ likes في الخلفية
     Map<String, int> tempLikes = {};
     Map<String, bool> tempLiked = {};
 
     await Future.wait(
       data.map((post) async {
         final productId = post['products']['id'];
-
         final count = await productService.getLikesCount(productId);
         final liked = await productService.isLiked(productId);
-
         tempLikes[productId] = count;
         tempLiked[productId] = liked;
       }),
     );
 
-    setState(() {
-      posts = data;
-      likesCount = tempLikes;
-      likedStatus = tempLiked;
-      isLoading = false;
-    });
+    // ✅ تحديث الـ likes بعد ما تجهز
+    if (mounted) {
+      setState(() {
+        likesCount = tempLikes;
+        likedStatus = tempLiked;
+      });
+    }
+
+     _scrollController.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
 
@@ -103,292 +106,367 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
 
       body: Column(
         children: [
-          const NavBar(scrollOffset: 0.0),
+          NavBar(scrollOffset: scrollOffset),
 
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                final influencer = post['influencers'];
-                final product = post['products'];
+            child:
+                isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      itemCount: posts.length,
+                      itemBuilder: (context, index) {
+                        final post = posts[index];
+                        final influencer = post['influencers'];
+                        final product = post['products'];
+                        final postImages = List<Map<String, dynamic>>.from(
+                          post['post_images'] ?? [],
+                        );
+                        final productImages = List<Map<String, dynamic>>.from(
+                          product['product_images'] ?? [],
+                        );
+                        final fallbackImage = product['image'];
 
-                final postImages = post['post_images'] ?? [];
-                final productImages = product['product_images'] ?? [];
+                        // 🔥 دمج الاثنين دائماً
+                        final images = [...postImages, ...productImages];
 
-                final fallbackImage = product['image'];
+                        // إذا لم يوجد شيء، استخدم الصورة الرئيسية
+                        final finalImages =
+                            images.isNotEmpty
+                                ? images
+                                : (fallbackImage != null
+                                    ? [
+                                      {'image_url': fallbackImage},
+                                    ]
+                                    : []);
 
-                final images =
-                    postImages.isNotEmpty
-                        ? postImages
-                        : (productImages.isNotEmpty
-                            ? productImages
-                            : [
-                              {'image_url': fallbackImage},
-                            ]);
-
-                return Center(
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        /// 🔹 HEADER
-                        Padding(
-                          padding: const EdgeInsets.all(10),
-                          child: Row(
-                            children: [
-                              /// 🔥 clickable (image + name)
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => InfluencerPage(
-                                            influencerId: influencer['id'],
-                                          ),
-                                    ),
-                                  );
-                                },
-                                child: Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 20,
-                                      backgroundImage:
-                                          influencer['avatar'] != null
-                                              ? NetworkImage(
-                                                influencer['avatar'],
-                                              )
-                                              : null,
-                                      child:
-                                          influencer['avatar'] == null
-                                              ? const Icon(Icons.person)
-                                              : null,
-                                    ),
-
-                                    const SizedBox(width: 10),
-
-                                    Row(
-                                      children: [
-                                        Text(
-                                          influencer['name'] ?? '',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-
-                                        if (influencer['is_verified'] == true)
-                                          const Padding(
-                                            padding: EdgeInsets.only(left: 4),
-                                            child: Icon(
-                                              Icons.verified,
-                                              color: Colors.blue,
-                                              size: 14,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ],
+                        return Center(
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 700),
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.04),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
-                              ),
+                              ],
+                            ),
 
-                              const Spacer(),
-
-                              /// 🔹 discount code (يبقى كما هو)
-                              GestureDetector(
-                                onTap: () {
-                                  Clipboard.setData(
-                                    ClipboardData(
-                                      text: influencer['discount_code'] ?? '',
-                                    ),
-                                  );
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text("Code copié ✅"),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                /// 🔹 HEADER
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
                                   child: Row(
                                     children: [
-                                      Text(
-                                        influencer['discount_code'] ?? "",
-                                        style: const TextStyle(fontSize: 12),
+                                      /// 🔥 clickable (image + name)
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) => InfluencerPage(
+                                                    influencerId:
+                                                        influencer['id'],
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              radius: 25,
+                                              backgroundImage:
+                                                  influencer['avatar'] != null
+                                                      ? NetworkImage(
+                                                        influencer['avatar'],
+                                                      )
+                                                      : null,
+                                              child:
+                                                  influencer['avatar'] == null
+                                                      ? const Icon(
+                                                        Icons
+                                                            .people_outline_sharp,
+                                                      )
+                                                      : null,
+                                            ),
+
+                                            const SizedBox(width: 10),
+
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Text(
+                                                      influencer['name'] ?? '',
+                                                      style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                    if (influencer['is_verified'] ==
+                                                        true)
+                                                      const Padding(
+                                                        padding:
+                                                            EdgeInsets.only(
+                                                              left: 4,
+                                                            ),
+                                                        child: Icon(
+                                                          Icons.verified,
+                                                          color: Colors.blue,
+                                                          size: 14,
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+
+                                                // 🔥 عدد المشتركين تحت الاسم
+                                                if ((influencer['followers_count'] ??
+                                                        0) >
+                                                    0)
+                                                  Text(
+                                                    'Followers ${_formatFollowers(influencer['followers_count'])}',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Color.fromARGB(162, 0, 169, 191),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      const SizedBox(width: 4),
-                                      const Icon(Icons.copy, size: 14),
+
+                                      const Spacer(),
+
+                                      /// 🔹 discount code (يبقى كما هو)
+                                      GestureDetector(
+                                        onTap: () {
+                                          Clipboard.setData(
+                                            ClipboardData(
+                                              text:
+                                                  influencer['discount_code'] ??
+                                                  '',
+                                            ),
+                                          );
+
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text("Code copié ✅"),
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(
+                                              20,
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Text(
+                                                influencer['discount_code'] ??
+                                                    "",
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              const Icon(Icons.copy, size: 14),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
 
-                        /// 🔹 IMAGE
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: buildImages(images),
-                        ),
-
-                        /// 🔹 ACTIONS
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(
-                                  likedStatus[product['id']] == true
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: Color.fromARGB(255, 255, 10, 88),
+                                /// 🔹 IMAGE
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: buildImages(finalImages),
                                 ),
-                                onPressed: () async {
-                                  setState(() {
-                                    likedStatus[product['id']] =
-                                        !likedStatus[product['id']]!;
-                                    likesCount[product['id']] =
-                                        likedStatus[product['id']]!
-                                            ? likesCount[product['id']]! + 1
-                                            : likesCount[product['id']]! - 1;
-                                  });
 
-                                  await productService.toggleLike(
-                                    product['id'],
-                                  );
-                                },
-                              ),
-
-                              Text(
-                                "${likesCount[product['id']] ?? 0}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-
-                              const SizedBox(width: 10),
-
-                              IconButton(
-                                icon: const Icon(Icons.chat_bubble_outline),
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (_) => CommentsPage(
-                                            productId: product['id'],
+                                /// 🔹 ACTIONS
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          likedStatus[product['id']] == true
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: Color.fromARGB(
+                                            255,
+                                            255,
+                                            10,
+                                            88,
                                           ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        /// 🔹 TEXT
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                product['title'] ?? '',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15,
-                                ),
-                              ),
-
-                              const SizedBox(height: 6),
-
-                              Text(
-                                post['description'] ?? "",
-                                style: TextStyle(color: Colors.grey[800]),
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              Row(
-                                children: [
-                                  Text(
-                                    "${product['price']} DA",
-                                    style: const TextStyle(
-                                      color: Color.fromARGB(255, 0, 169, 191),
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-
-                                  const Spacer(),
-
-                                  TextButton(
-                                    child: const Text(
-                                      "Voir plus",
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                    onPressed: () {
-                                      final fixedProduct =
-                                          Map<String, dynamic>.from(product);
-
-                                      final shopData = fixedProduct['shops'];
-
-                                      if (shopData is List &&
-                                          shopData.isNotEmpty) {
-                                        fixedProduct['shops'] = shopData[0];
-                                      }
-
-                                      final productModel = ProductModel.fromMap(
-                                        fixedProduct,
-                                      );
-
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder:
-                                              (_) => ProductDetailPage(
-                                                product: productModel,
-                                              ),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
+                                        onPressed: () async {
+                                          setState(() {
+                                            likedStatus[product['id']] =
+                                                !likedStatus[product['id']]!;
+                                            likesCount[product['id']] =
+                                                likedStatus[product['id']]!
+                                                    ? likesCount[product['id']]! +
+                                                        1
+                                                    : likesCount[product['id']]! -
+                                                        1;
+                                          });
 
-                              const SizedBox(height: 10),
-                            ],
+                                          await productService.toggleLike(
+                                            product['id'],
+                                          );
+                                        },
+                                      ),
+
+                                      Text(
+                                        "${likesCount[product['id']] ?? 0}",
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 10),
+
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.chat_bubble_outline,
+                                        ),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (_) => CommentsPage(
+                                                    productId: product['id'],
+                                                  ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                /// 🔹 TEXT
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product['title'] ?? '',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 6),
+
+                                      Text(
+                                        post['description'] ?? "",
+                                        style: TextStyle(
+                                          color: Colors.grey[800],
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 8),
+
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "${product['price']} DA",
+                                            style: const TextStyle(
+                                              color: Color.fromARGB(
+                                                255,
+                                                0,
+                                                169,
+                                                191,
+                                              ),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+
+                                          const Spacer(),
+
+                                          TextButton(
+                                            child: const Text(
+                                              "Voir plus",
+                                              style: TextStyle(
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              final fixedProduct =
+                                                  Map<String, dynamic>.from(
+                                                    product,
+                                                  );
+
+                                              final shopData =
+                                                  fixedProduct['shops'];
+
+                                              if (shopData is List &&
+                                                  shopData.isNotEmpty) {
+                                                fixedProduct['shops'] =
+                                                    shopData[0];
+                                              }
+
+                                              final productModel =
+                                                  ProductModel.fromMap(
+                                                    fixedProduct,
+                                                  );
+
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder:
+                                                      (_) => ProductDetailPage(
+                                                        product: productModel,
+                                                      ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+
+                                      const SizedBox(height: 10),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
-                  ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -465,5 +543,13 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
       return value.first.toString();
     }
     return '';
+  }
+
+  String _formatFollowers(dynamic count) {
+    if (count == null) return '';
+    final n = (count as num).toInt();
+    if (n >= 1000000) return '${(n / 1000000).toStringAsFixed(1)}M 👥';
+    if (n >= 1000) return '${(n / 1000).toStringAsFixed(0)}K 👥';
+    return '$n 👥';
   }
 }

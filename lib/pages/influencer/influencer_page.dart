@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:peemart/models/product_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../widgets/product/product_card.dart';
-import '../../widgets/influencer/influencer_info.dart'; // 🔥 سننشئها
+import '../../widgets/influencer/influencer_info.dart';
 
 class InfluencerPage extends StatefulWidget {
   final String influencerId;
@@ -27,15 +27,26 @@ class _InfluencerPageState extends State<InfluencerPage> {
     try {
       final supabase = Supabase.instance.client;
 
-      /// 🔥 1. جلب product_id من posts
+      // 1. جلب product_ids من posts
       final postsResponse = await supabase
           .from('posts')
           .select('product_id')
           .eq('influencer_id', widget.influencerId);
 
-      final postList = postsResponse as List;
+      final productIds =
+          (postsResponse as List)
+              .map((e) => e['product_id'])
+              .where(
+                (id) =>
+                    id != null &&
+                    id.toString().trim().isNotEmpty &&
+                    id.toString() != "null",
+              )
+              .map((id) => id.toString())
+              .toSet()
+              .toList();
 
-      if (postList.isEmpty) {
+      if (productIds.isEmpty) {
         setState(() {
           products = [];
           isLoading = false;
@@ -43,30 +54,25 @@ class _InfluencerPageState extends State<InfluencerPage> {
         return;
       }
 
-      /// 🔥 استخراج ids
-      final productIds = postList.map((e) => e['product_id']).toSet().toList();
-
-      /// 🔥 2. جلب المنتجات
+      // 2. جلب المنتجات مع المتجر مباشرة عبر JOIN 🔥
       final productsResponse = await supabase
           .from('products')
-          .select('*, product_images(*), shops(*)')
+          .select('''
+          *,
+          product_images(image_url),
+          shops(id, name, avatar)
+        ''')
           .in_('id', productIds);
 
-      final data =
-          (productsResponse as List)
-              .map((e) => e as Map<String, dynamic>)
-              .toList();
+      final productsData = List<Map<String, dynamic>>.from(productsResponse);
 
       setState(() {
-        products = data;
+        products = productsData;
         isLoading = false;
       });
     } catch (e) {
-      print('🔥 ERROR fetchProducts: $e');
-
-      setState(() {
-        isLoading = false;
-      });
+      print('ERROR: $e');
+      setState(() => isLoading = false);
     }
   }
 
@@ -102,7 +108,7 @@ class _InfluencerPageState extends State<InfluencerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// 🔥 INFO المؤثر (مثل ShopInfo)
+            /// 🔥 معلومات المؤثر
             InfluencerInfo(influencerId: widget.influencerId),
 
             const SizedBox(height: 20),
@@ -117,7 +123,7 @@ class _InfluencerPageState extends State<InfluencerPage> {
 
             const SizedBox(height: 10),
 
-            /// 🔥 GRID (نفسك 100%)
+            /// 🔥 GRID
             Padding(
               padding: const EdgeInsets.all(12),
               child:
@@ -151,7 +157,7 @@ class _InfluencerPageState extends State<InfluencerPage> {
                                   ? images[0]
                                   : 'https://via.placeholder.com/150';
 
-                          /// ===== SHOP =====
+                          /// ===== SHOP (🔥 الحل هنا)
                           final shop =
                               product['shops'] as Map<String, dynamic>?;
 
@@ -164,9 +170,9 @@ class _InfluencerPageState extends State<InfluencerPage> {
                               images: images,
                               price:
                                   (product['price'] as num?)?.toDouble() ?? 0.0,
-                              shopId: product['shop_id'].toString(),
-                              shopName: shop?['name'] ?? '',
-                              shopAvatar: shop?['avatar'] ?? '',
+                              shopId: shop?['id']?.toString() ?? '', // ✅
+                              shopName: shop?['name'] ?? '', // ✅
+                              shopAvatar: shop?['avatar'] ?? '', // ✅
                               rating:
                                   (product['rating'] as num?)?.toDouble() ?? 0,
                               reviewCount:
