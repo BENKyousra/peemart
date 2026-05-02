@@ -3,9 +3,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'pages/home_page.dart';
 import 'auth/auth_gate.dart';
 import 'pages/feedback_page.dart';
-import 'pages/concours_page.dart';
+import 'pages/concours/concours_page.dart';
 import 'pages/influencer/influenceurs_page.dart';
 import 'pages/admin_dashboard_page.dart';
+import 'pages/places_page.dart';
 
 
 Future<void> main() async {
@@ -33,7 +34,7 @@ class MyApp extends StatelessWidget {
     useMaterial3: true,
   ),
 
-  initialRoute: '/home',
+  initialRoute: '/auth',
   
 
   routes: {
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
     '/concours': (context) => const ConcoursPage(),
     '/influencers': (context) => const InfluenceursPage(),
     '/admin': (context) => const AdminDashboardPage(),
+    '/places': (context) => const PlacesPage(),
   },
   
 );

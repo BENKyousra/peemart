@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../widgets/product/product_card.dart';
 import '../widgets/shop_info.dart';
 import '../models/product_model.dart';
@@ -14,15 +15,36 @@ class ShopPage extends StatefulWidget {
 }
 
 class _ShopPageState extends State<ShopPage> {
-  List<ProductModel> products = []; // 🔥 plus de Map
+  List<ProductModel> products = [];
   bool isLoading = true;
+
+  Map<String, dynamic>? shop; // 🧠 shop info
 
   @override
   void initState() {
     super.initState();
+    fetchShopInfo();
     fetchProducts();
   }
 
+  // 🏪 GET SHOP INFO
+  Future<void> fetchShopInfo() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('shops')
+          .select('*')
+          .eq('id', widget.shopId)
+          .single();
+
+      setState(() {
+        shop = response;
+      });
+    } catch (e) {
+      print("Erreur fetchShopInfo: $e");
+    }
+  }
+
+  // 📦 GET PRODUCTS
   Future<void> fetchProducts() async {
     try {
       final response = await Supabase.instance.client
@@ -30,7 +52,6 @@ class _ShopPageState extends State<ShopPage> {
           .select('*, product_images(*), shops(*)')
           .eq('shop_id', widget.shopId);
 
-      // 🔥 CONVERSION PROPRE
       final data = (response as List)
           .map((e) => ProductModel.fromMap(e))
           .toList();
@@ -48,6 +69,9 @@ class _ShopPageState extends State<ShopPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+
+      // 🧭 APP BAR DYNAMIQUE
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Container(
@@ -61,12 +85,17 @@ class _ShopPageState extends State<ShopPage> {
           ),
           child: AppBar(
             iconTheme: const IconThemeData(color: Colors.white),
-            title: const Text(
-              "Boutique",
-              style: TextStyle(fontSize: 28, color: Colors.white),
-            ),
             backgroundColor: Colors.transparent,
             elevation: 0,
+
+            title: Text(
+              shop?['name'] ?? "Boutique",
+              style: const TextStyle(
+                fontSize: 22,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ),
       ),
@@ -75,23 +104,26 @@ class _ShopPageState extends State<ShopPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ===== SHOP INFO =====
+            // 🏪 SHOP INFO
             ShopInfo(shopId: widget.shopId),
 
             const SizedBox(height: 20),
 
-            // ===== TITLE =====
+            // 📦 TITLE
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Text(
                 "Produits de la boutique",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
 
             const SizedBox(height: 10),
 
-            // ===== GRID =====
+            // 📦 PRODUCTS GRID
             Padding(
               padding: const EdgeInsets.all(12),
               child: isLoading
@@ -111,8 +143,8 @@ class _ShopPageState extends State<ShopPage> {
                         final product = products[index];
 
                         return ProductCard(
-                          product: product, // 🔥 CLEAN
-                          reviewCount: 0, // 👉 adapte si dispo
+                          product: product,
+                          reviewCount: 0,
                         );
                       },
                     ),

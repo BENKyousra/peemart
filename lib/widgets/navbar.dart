@@ -47,7 +47,7 @@ class _NavBarState extends State<NavBar> {
   final Map<String, String> routes = {
     "Accueil": "/home",
     "Dashboard": "/dashboard",
-    "Boutiques": "/boutiques",
+    "Places": "/places",
     "Influenceurs": "/influencers",
     "Feedback": "/feedback",
     "Concours": "/concours",
@@ -135,7 +135,7 @@ class _NavBarState extends State<NavBar> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _navButton('Accueil'),
-              _navButton('Boutiques'),
+              _navButton('Places'),
               _navButton('Influenceurs'),
               _navButton('Feedback'),
               _navButton('Concours'),

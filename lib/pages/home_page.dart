@@ -160,6 +160,7 @@ class _HomePageState extends State<HomePage> {
     required String title,
     required IconData icon,
     required List<ProductModel> products,
+
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

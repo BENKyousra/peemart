@@ -44,22 +44,23 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     if (stats == null || profile == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Admin Dashboard", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Admin Dashboard",
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Color.fromARGB(255, 0, 1, 59),
-        
+
         actions: [
           IconButton(
             onPressed: logout,
             icon: const Icon(Icons.logout),
             color: Colors.white,
-          )
+          ),
         ],
       ),
 
@@ -67,18 +68,19 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             // 🔵 PROFILE
             Row(
               children: [
                 CircleAvatar(
                   radius: 30,
-                  backgroundImage: profile!['avatar_url'] != null
-                      ? NetworkImage(profile!['avatar_url'])
-                      : null,
-                  child: profile!['avatar_url'] == null
-                      ? const Icon(Icons.person)
-                      : null,
+                  backgroundImage:
+                      profile!['avatar_url'] != null
+                          ? NetworkImage(profile!['avatar_url'])
+                          : null,
+                  child:
+                      profile!['avatar_url'] == null
+                          ? const Icon(Icons.person)
+                          : null,
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -87,11 +89,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     Text(
                       profile!['username'] ?? 'Admin',
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Text("Administrator"),
                   ],
-                )
+                ),
               ],
             ),
 
@@ -104,14 +108,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 crossAxisSpacing: 10,
                 mainAxisSpacing: 10,
                 children: [
-
                   StatCard(
                     title: "Users",
                     value: "${stats!['users']}",
                     icon: Icons.people,
                     color: Colors.blue,
-                     backgroundImage:
-      "https://images.unsplash.com/photo-1522071820081-009f0129c71c",
+                    backgroundImage:
+                        "https://images.unsplash.com/photo-1522071820081-009f0129c71c",
                   ),
 
                   StatCard(
@@ -119,8 +122,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     value: "${stats!['products']}",
                     icon: Icons.shopping_bag,
                     color: Colors.green,
-                      backgroundImage:
-      "https://images.unsplash.com/photo-1523275335684-37898b6baf30",
+                    backgroundImage:
+                        "https://images.unsplash.com/photo-1523275335684-37898b6baf30",
                   ),
 
                   StatCard(
@@ -128,8 +131,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     value: "${stats!['orders']}",
                     icon: Icons.shopping_cart,
                     color: Colors.orange,
-                     backgroundImage:
-      "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
+                    backgroundImage:
+                        "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d",
                   ),
 
                   StatCard(
@@ -137,7 +140,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                     value: "${stats!['revenue'].toStringAsFixed(0)} DA",
                     icon: Icons.attach_money,
                     color: Colors.purple,
-                    backgroundImage: "https://images.unsplash.com/photo-1521737604893-d14cc237f11d",
+                    backgroundImage:
+                        "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=1011&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                   ),
                 ],
               ),
