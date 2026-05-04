@@ -66,4 +66,35 @@ class ProfileService {
   Future<void> logout() async {
     await supabase.auth.signOut();
   }
+
+  // 🔹 DELETE ACCOUNT
+Future<void> deleteAccount() async {
+  final user = supabase.auth.currentUser;
+  if (user == null) return;
+
+  final userId = user.id;
+
+  try {
+    // 1. Supprimer les données user dans la table "users"
+    await supabase.from('users').delete().eq('id', userId);
+
+    // 2. Supprimer avatar dans storage (optionnel mais propre)
+    final bucket = supabase.storage.from('avatars');
+    final path = '$userId/avatar.png';
+
+    try {
+      await bucket.remove([path]);
+    } catch (e) {
+      print("⚠️ Avatar delete error (ignore): $e");
+    }
+
+    // 3. Logout user
+    await supabase.auth.signOut();
+
+    // ❗ 4. Supprimer le compte auth (voir note ci-dessous)
+  } catch (e) {
+    print("❌ Delete account error: $e");
+    rethrow;
+  }
+}
 }

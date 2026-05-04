@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'feedback_item.dart';
 import '../../services/feedback_service.dart';
+import '../footer.dart';
 
 class FeedbackList extends StatefulWidget {
   final ScrollController scrollController;
@@ -42,21 +43,27 @@ class _FeedbackListState extends State<FeedbackList> {
     }
 
     return RefreshIndicator(
-      onRefresh: load,
+  onRefresh: load,
 
-      // 🔥 IMPORTANT : scroll contrôlé par la page parent
-      child: ListView.builder(
-        controller: widget.scrollController, // 🔥 IMPORTANT
-        physics: const AlwaysScrollableScrollPhysics(),
+  child: ListView.builder(
+    controller: widget.scrollController,
+    physics: const AlwaysScrollableScrollPhysics(),
 
-        itemCount: feedbacks.length,
-        itemBuilder: (context, i) {
-          return FeedbackItem(
-            feedback: feedbacks[i],
-            onRefresh: load,
-          );
-        },
-      ),
-    );
+    itemCount: feedbacks.length + 1, // 🔥 +1 pour footer
+
+    itemBuilder: (context, i) {
+
+      // 👇 FOOTER À LA FIN
+      if (i == feedbacks.length) {
+        return const Footer();
+      }
+
+      return FeedbackItem(
+        feedback: feedbacks[i],
+        onRefresh: load,
+      );
+    },
+  ),
+);
   }
 }

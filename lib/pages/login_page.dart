@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isPasswordVisible = false;
   bool _isLoading = false;
-  bool _isSignUp = false;
+  bool _isSignUp = false; 
   String _errorMessage = '';
 
   @override
@@ -60,7 +60,7 @@ Future<void> _login() async {
           'username': _usernameController.text.trim(),
           'email': user.email,
           'avatar_url':
-              'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg',
+              'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png',
         });
       }
 
@@ -100,11 +100,11 @@ Future<void> _signUp() async {
     final user = response.user;
     if (user != null) {
       await supabase.from('users').insert({
-        'id': user.id,
+        'id': user.id,        
         'username': _usernameController.text.trim(),
         'email': _emailController.text.trim(),
         'avatar_url':
-            'https://static.vecteezy.com/system/resources/previews/000/288/638/non_2x/broker-vector-icon.jpg',
+        'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png',
       });
 
       if (!mounted) return;
@@ -274,7 +274,7 @@ Future<void> _signUp() async {
                           style: const TextStyle(color: Colors.white),
                         ),
                          const SizedBox(height: 6),
-
+if (!_isSignUp)
                           // ===== Forgot password =====
                           Align(
                             alignment: Alignment.centerRight,

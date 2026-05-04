@@ -153,16 +153,33 @@ class _FeedbackItemState extends State<FeedbackItem> {
   }
 
   String formatDate(String dateString) {
-    final date = DateTime.parse(dateString);
-    final now = DateTime.now();
-    final diff = now.difference(date);
+  final date = DateTime.parse(dateString);
+  final now = DateTime.now();
+  final diff = now.difference(date);
 
-    if (diff.inMinutes < 1) return "à l'instant";
-    if (diff.inMinutes < 60) return "${diff.inMinutes} min";
-    if (diff.inHours < 24) return "${diff.inHours} h";
-
-    return "${date.day}/${date.month}";
+  if (diff.inMinutes < 1) {
+    return "à l'instant";
   }
+
+  if (diff.inMinutes < 60) {
+    return "il y a ${diff.inMinutes} min";
+  }
+
+  if (diff.inHours < 24) {
+    return "il y a ${diff.inHours} h";
+  }
+
+  if (diff.inDays == 1) {
+    return "hier";
+  }
+
+  if (diff.inDays < 7) {
+    return "il y a ${diff.inDays} jours";
+  }
+
+  // Format propre pour les dates anciennes
+  return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+}
 
   @override
   Widget build(BuildContext context) {

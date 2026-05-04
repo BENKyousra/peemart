@@ -8,6 +8,10 @@ import '../pages/seller_dashboard_page.dart';
 import '../services/notification_service.dart';
 import '../pages/notifications_page.dart';
 import '../pages/favorites_page.dart';
+import '../pages/influencer/influencer_dashboard.dart';
+import '../pages/products/product_detail_page.dart';
+import '../pages/shop_page.dart';
+import '../../models/product_model.dart';
 
 class NavBar extends StatefulWidget {
   final Function(String)? onSearch;
@@ -35,6 +39,10 @@ class _NavBarState extends State<NavBar> {
   String currentPage = "Accueil";
 
   bool isSeller = false;
+  bool isInfluencer = false;
+
+  List<dynamic> productList = [];
+  List<dynamic> shopList = [];
 
   @override
   void initState() {
@@ -44,6 +52,32 @@ class _NavBarState extends State<NavBar> {
     supabase.auth.onAuthStateChange.listen((data) {
       _loadUser();
     });
+  }
+
+  Future<Map<String, dynamic>> searchAll(String query) async {
+    final products = await supabase
+    .from('products')
+    .select('''
+      *,
+      shops (
+        id,
+        name,
+        avatar
+      ),
+      product_images (
+        image_url
+      )
+    ''')
+    .or('title.ilike.%$query%,description.ilike.%$query%')
+    .limit(20);
+
+    final shops = await supabase
+        .from('shops')
+        .select()
+        .ilike('name', '%$query%')
+        .limit(10);
+
+    return {'products': products, 'shops': shops};
   }
 
   final Map<String, String> routes = {
@@ -73,6 +107,7 @@ class _NavBarState extends State<NavBar> {
           favoritesCount = data['favorites_count'] ?? 0;
           cartCount = data['cart_count'] ?? 0;
           isSeller = data['is_seller'] ?? false;
+          isInfluencer = data['is_influencer'] ?? false;
         });
       } catch (e) {
         // Si problème avec la table users, on met des valeurs par défaut
@@ -91,6 +126,67 @@ class _NavBarState extends State<NavBar> {
       });
     }
   }
+
+  void showSearchResults() {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        child: ListView(
+          children: [
+            const Text(
+              "Produits",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+
+            ...productList.map((p) => ListTile(
+              title: Text(p['title'] ?? ''),
+              subtitle: Text('${p['price']} DA'),
+
+              onTap: () {
+                Navigator.pop(context); // fermer le bottom sheet
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ProductDetailPage(
+                      product: ProductModel.fromMap(p),
+                    ),
+                  ),
+                );
+              },
+            )),
+
+            const SizedBox(height: 10),
+
+            const Text(
+              "Boutiques",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+
+            ...shopList.map((s) => ListTile(
+              title: Text(s['name'] ?? ''),
+
+              onTap: () {
+                Navigator.pop(context);
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ShopPage(
+                      shopId: s['id'],
+                    ),
+                  ),
+                );
+              },
+            )),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -116,29 +212,33 @@ class _NavBarState extends State<NavBar> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-             InkWell(
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const HomePage()),
-    );
-  },
-  child: Row(
-    children: [
-      Image.asset('assets/images/logo.png', width: 38, height: 38),
-      const SizedBox(width: 8),
-      const Text(
-        'PeeMart',
-        style: TextStyle(
-          fontFamily: 'Swansea',
-          fontSize: 28,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    ],
-  ),
-),
+              InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const HomePage()),
+                  );
+                },
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: 38,
+                      height: 38,
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'PeeMart',
+                      style: TextStyle(
+                        fontFamily: 'Swansea',
+                        fontSize: 28,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               isConnected ? _connectedUI() : _loginButton(),
             ],
@@ -170,19 +270,25 @@ class _NavBarState extends State<NavBar> {
                 const SizedBox(height: 15),
 
                 // SEARCH
-                SizedBox(
-                  width: double.infinity,
-                  child: TextField(
-                    onSubmitted: widget.onSearch,
-                    decoration: const InputDecoration(
-                      hintText: 'Rechercher un produit ou une boutique...',
-                      prefixIcon: Icon(Icons.search),
-                      fillColor: Colors.white,
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12)),
-                        borderSide: BorderSide.none,
-                      ),
+                TextField(
+                  onSubmitted: (value) async {
+                    final result = await searchAll(value);
+
+                    setState(() {
+                      productList = result['products'];
+                      shopList = result['shops'];
+                    });
+
+                    showSearchResults();
+                  },
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher un produit ou une boutique...',
+                    prefixIcon: Icon(Icons.search),
+                    fillColor: Colors.white,
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
@@ -213,6 +319,18 @@ class _NavBarState extends State<NavBar> {
                           "avatar_url": avatarUrl,
                         },
                       ),
+                ),
+              );
+            },
+          ),
+        if (isInfluencer)
+          IconButton(
+            icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const InfluencerDashboardPage(),
                 ),
               );
             },

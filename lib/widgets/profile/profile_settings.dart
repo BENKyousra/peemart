@@ -4,13 +4,15 @@ import 'settings_item.dart'; // ton widget SettingsItem
 class ProfileSettings extends StatelessWidget {
   final bool isSeller;
   final Function(bool) updateSeller;
-  final VoidCallback logout;
+  final Future<void> Function() logout;
+  final Future<void> Function() deleteAccount;
 
   const ProfileSettings({
     super.key,
     required this.isSeller,
     required this.updateSeller,
     required this.logout,
+    required this.deleteAccount,
   });
 
   @override
@@ -30,10 +32,10 @@ class ProfileSettings extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                 const Text(
+                  const Text(
                     'Paramètres du profil',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ), 
+                  ),
                   const SizedBox(height: 16),
                   // ===== COMPTE =====
                   const Text(
@@ -144,15 +146,72 @@ class ProfileSettings extends StatelessWidget {
                   const SizedBox(height: 8),
                   SettingsItem(
                     title: 'Déconnexion',
-                    color: Colors.red,
-                    onTap: logout,
+                    color: Color.fromARGB(255, 255, 10, 88),
+                    onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text("Déconnexion"),
+                              content: const Text(
+                                "Voulez-vous vraiment vous déconnecter ?",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                  child: const Text("Annuler",style: TextStyle(color: Color.fromARGB(255, 0, 169, 191)),),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    "Déconnecter",
+                                    style: TextStyle(color: Color.fromARGB(255, 255, 10, 88)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      );
+
+                      if (confirm == true) {
+                        await logout();
+                      }
+                    },
                   ),
                   SettingsItem(
                     title: 'Supprimer le compte',
-                    color: Colors.red,
-                    onTap: () {},
-                  ),
+                    color: Color.fromARGB(255, 255, 10, 88),
+                    onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder:
+                            (context) => AlertDialog(
+                              title: const Text("Supprimer le compte"),
+                              content: const Text(
+                                "Voulez-vous vraiment supprimer votre compte ? Cette action est irréversible.",
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed:
+                                      () => Navigator.pop(context, false),
+                                  child: const Text("Annuler",style: TextStyle(color: Color.fromARGB(255, 0, 169, 191)),),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text(
+                                    "Supprimer",
+                                    style: TextStyle(color: Color.fromARGB(255, 255, 10, 88)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      );
 
+                      if (confirm == true) {
+                        await deleteAccount();
+                      }
+                    },
+                  ),
                 ],
               ),
             ),

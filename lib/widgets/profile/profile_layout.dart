@@ -111,6 +111,19 @@ class _ProfileLayoutState extends State<ProfileLayout> {
                 isSeller: widget.isSeller,
                 updateSeller: widget.updateSeller,
                 logout: widget.logout,
+                deleteAccount: () async {
+                  // 🔥 DELETE ACCOUNT
+                  final user = supabase.auth.currentUser;
+                  if (user == null) return;
+
+                  try {
+                    await supabase.from('users').delete().eq('id', user.id);
+                    await supabase.auth.signOut();
+                    widget.logout();
+                  } catch (e) {
+                    print("DELETE ACCOUNT ERROR: $e");
+                  }
+                },
               ),
             ),
           ),

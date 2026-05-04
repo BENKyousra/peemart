@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'shop_page.dart';
 import '../../services/shop_service.dart';
 import '../../widgets/navbar.dart';
+import '../../widgets/footer.dart';
 
 class PlacesPage extends StatefulWidget {
   const PlacesPage({super.key});
@@ -107,11 +108,11 @@ class _PlacesPageState extends State<PlacesPage> {
                       : ListView(
                         controller: _scrollController, // 🔥 IMPORTANT
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(12),
-
+                     
                         children: [
                           // 🌍 FILTER WILAYA
                           DropdownButton<String>(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                             value: selectedWilaya,
                             isExpanded: true,
                             dropdownColor: Colors.white,
@@ -144,21 +145,24 @@ class _PlacesPageState extends State<PlacesPage> {
                             return Card(
                               elevation: 2,
                               color: Colors.white,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
+                              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
 
                               child: ListTile(
+
                                 onTap: () {
-  final id = shop['id'];
+                                  final id = shop['id'];
 
-  if (id == null) return;
+                                  if (id == null) return;
 
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => ShopPage(shopId: id.toString()),
-    ),
-  );
-},
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (_) =>
+                                              ShopPage(shopId: id.toString()),
+                                    ),
+                                  );
+                                },
                                 leading: CircleAvatar(
                                   backgroundImage:
                                       shop['avatar'] != null &&
@@ -179,6 +183,7 @@ class _PlacesPageState extends State<PlacesPage> {
                               ),
                             );
                           }),
+                          const Footer(),
                         ],
                       ),
             ),

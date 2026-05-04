@@ -23,7 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String username = '';
   String email = '';
   static const String defaultAvatar =
-      'https://cdn.pixabay.com/photo/2017/07/18/23/23/user-2517433_1280.png';
+      'https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_1280.png';
   String avatarUrl = defaultAvatar;
   String bio = '';
   bool isSeller = false;

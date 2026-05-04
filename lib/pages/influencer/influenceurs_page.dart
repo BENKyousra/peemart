@@ -9,6 +9,7 @@ import 'package:peemart/services/post_service.dart';
 import '../../services/influencer/product_service.dart';
 import 'package:peemart/pages/gallery_page.dart';
 import '../../widgets/navbar.dart';
+import '../../widgets/footer.dart';
 
 class InfluenceursPage extends StatefulWidget {
   const InfluenceursPage({super.key});
@@ -27,18 +28,24 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
   bool isLoading = true;
   bool isInfluencer = false;
 
-   final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
   double scrollOffset = 0;
 
   @override
   void initState() {
     super.initState();
     initPage();
-     _scrollController.addListener(() {
+    _scrollController.addListener(() {
       setState(() {
         scrollOffset = _scrollController.offset;
       });
     });
+  }
+
+   @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> initPage() async {
@@ -81,7 +88,6 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
       });
     }
 
-     _scrollController.dispose();
   }
 
   @override
@@ -113,9 +119,16 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
                 isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      itemCount: posts.length,
+                      controller: _scrollController,
+                      itemCount: posts.length + 1,
                       itemBuilder: (context, index) {
+                        if (index == posts.length) {
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 20),
+                            child: Footer(),
+                          );
+                        }
+
                         final post = posts[index];
                         final influencer = post['influencers'];
                         final product = post['products'];
@@ -239,7 +252,12 @@ class _InfluenceursPageState extends State<InfluenceursPage> {
                                                       fontSize: 13,
                                                       fontWeight:
                                                           FontWeight.bold,
-                                                      color: Color.fromARGB(162, 0, 169, 191),
+                                                      color: Color.fromARGB(
+                                                        162,
+                                                        0,
+                                                        169,
+                                                        191,
+                                                      ),
                                                     ),
                                                   ),
                                               ],

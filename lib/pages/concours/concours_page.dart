@@ -45,11 +45,12 @@ class _ConcoursPageState extends State<ConcoursPage> {
     if (user == null) return;
 
     try {
-      final data = await supabase
-          .from('users')
-          .select('is_seller')
-          .eq('id', user.id)
-          .single();
+      final data =
+          await supabase
+              .from('users')
+              .select('is_seller')
+              .eq('id', user.id)
+              .single();
 
       setState(() {
         isSeller = data['is_seller'] == true;
@@ -67,21 +68,22 @@ class _ConcoursPageState extends State<ConcoursPage> {
       backgroundColor: const Color.fromARGB(255, 245, 246, 250),
 
       // 🔥 FLOATING BUTTON
-      floatingActionButton: loading
-          ? null
-          : isSeller
+      floatingActionButton:
+          loading
+              ? null
+              : isSeller
               ? FloatingActionButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CreateConcoursPage(),
-                      ),
-                    );
-                  },
-                  backgroundColor: const Color.fromARGB(255, 0, 2, 105),
-                  child: const Icon(Icons.add, color: Colors.white),
-                )
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateConcoursPage(),
+                    ),
+                  );
+                },
+                backgroundColor: const Color.fromARGB(255, 0, 2, 105),
+                child: const Icon(Icons.add, color: Colors.white),
+              )
               : null,
 
       body: Column(
@@ -90,11 +92,8 @@ class _ConcoursPageState extends State<ConcoursPage> {
           NavBar(scrollOffset: scrollOffset),
 
           // 📦 LISTE
-          Expanded(
-            child: ConcoursList(
-              scrollController: _scrollController,
-            ),
-          ),
+          Expanded(child: ConcoursList(scrollController: _scrollController)),
+          
         ],
       ),
     );

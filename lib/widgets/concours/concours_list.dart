@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/concours_model.dart';
 import '../../services/concours_service.dart';
 import 'concours_card.dart';
+import '../../widgets/footer.dart';
 
 class ConcoursList extends StatefulWidget {
   final ScrollController scrollController;
@@ -50,14 +51,17 @@ class _ConcoursListState extends State<ConcoursList> {
           controller: widget.scrollController, // 🔥 IMPORTANT
 
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
 
           itemCount: concours.length,
           itemBuilder: (context, index) {
             final c = concours[index];
 
+            if (index == concours.length - 1) {
+        return const Footer();
+      }
+
             return Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+              padding: const  EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ConcoursCard(
                 id: c.id,
                 type: c.type,

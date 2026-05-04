@@ -4,6 +4,7 @@ import '../widgets/product/product_section.dart';
 import '../widgets/navbar.dart';
 import 'products/products_list_page.dart';
 import '../models/product_model.dart';
+import '../widgets/footer.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -154,7 +155,10 @@ Widget build(BuildContext context) {
                             icon: Icons.whatshot,
                             products: popularProducts,
                           ),
+                          const SizedBox(height: 20),
+                          const Footer(),
                         ],
+                        
                       ),
                     ),
                   ),
