@@ -27,46 +27,42 @@ class AuthGate extends StatelessWidget {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final session = Supabase.instance.client.auth.currentSession;
+@override
+Widget build(BuildContext context) {
+  final session = Supabase.instance.client.auth.currentSession;
 
-    // 🔴 Not logged in
-    if (session == null) {
-      return const LoginPage();
-    }
-
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _getUserProfile(),
-      builder: (context, snapshot) {
-        // 🔵 Loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        // 🔴 Error or no data
-        if (!snapshot.hasData || snapshot.data == null) {
-          return const LoginPage();
-        }
-
-        final profile = snapshot.data!;
-
-        debugPrint("PROFILE LOADED => $profile");
-
-        final role = (profile['role'] ?? 'user').toString().toLowerCase();
-
-        // 🔥 1. ADMIN (highest priority)
-        if (role == 'admin') {
-          return const AdminDashboardPage();
-        }
-
-        
-
-        // 🔥 3. NORMAL USER
-        return const HomePage();
-      },
-    );
+  if (session == null) {
+    return const LoginPage();
   }
+
+  return FutureBuilder<Map<String, dynamic>?>(
+    future: _getUserProfile(),
+    builder: (context, snapshot) {
+
+      if (!snapshot.hasData) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      final profile = snapshot.data!;
+      final role = (profile['role'] ?? 'user').toString().toLowerCase();
+
+      // 🔥 Redirection propre (UNE seule page pour admin)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (role == 'admin') {
+          Navigator.pushReplacementNamed(context, '/admin');
+        } else if (role == 'seller') {
+          Navigator.pushReplacementNamed(context, '/home'); // ou seller route
+        } else {
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      });
+
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    },
+  );
+}
 }

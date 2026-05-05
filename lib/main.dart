@@ -7,7 +7,7 @@ import 'pages/concours/concours_page.dart';
 import 'pages/influencer/influenceurs_page.dart';
 import 'pages/admin_dashboard_page.dart';
 import 'pages/places_page.dart';
-
+import 'pages/protected_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,26 +27,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-  title: 'PeeMart',
-  debugShowCheckedModeBanner: false,
-  theme: ThemeData(
-    fontFamily: 'Swansea',
-    useMaterial3: true,
-  ),
+      title: 'PeeMart',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(fontFamily: 'Swansea', useMaterial3: true),
 
-  initialRoute: '/auth',
-  
+      initialRoute: '/auth',
 
-  routes: {
-    '/home': (context) => const HomePage(),
-    '/auth': (context) => const AuthGate(),
-    '/feedback': (context) => const FeedbackPage(),
-    '/concours': (context) => const ConcoursPage(),
-    '/influencers': (context) => const InfluenceursPage(),
-    '/admin': (context) => const AdminDashboardPage(),
-    '/places': (context) => const PlacesPage(),
-  },
-  
-);
+      routes: {
+        '/home': (context) => const ProtectedPage(child: HomePage()),
+        '/concours': (context) => const ProtectedPage(child: ConcoursPage()),
+        '/places': (context) => const ProtectedPage(child: PlacesPage()),
+        '/feedback': (context) => const ProtectedPage(child: FeedbackPage()),
+        '/influencers':
+            (context) => const ProtectedPage(child: InfluenceursPage()),
+        '/auth': (context) => const AuthGate(),
+        '/admin': (context) => const AdminDashboardPage(),
+      },
+    );
   }
 }
