@@ -15,10 +15,10 @@ class AuthGate extends StatelessWidget {
 
     try {
       final data = await Supabase.instance.client
-          .from('users')
+          .from('users') // ⚠️ assure-toi que c'est la bonne table
           .select()
           .eq('id', user.id)
-          .maybeSingle(); // 🔥 safer than single()
+          .maybeSingle();
 
       return data;
     } catch (e) {
@@ -27,42 +27,61 @@ class AuthGate extends StatelessWidget {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  final session = Supabase.instance.client.auth.currentSession;
+  @override
+  Widget build(BuildContext context) {
+    final session = Supabase.instance.client.auth.currentSession;
 
-  if (session == null) {
-    return const LoginPage();
-  }
+    // ❌ Pas connecté
+    if (session == null) {
+      return const LoginPage();
+    }
 
-  return FutureBuilder<Map<String, dynamic>?>(
-    future: _getUserProfile(),
-    builder: (context, snapshot) {
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: _getUserProfile(),
+      builder: (context, snapshot) {
 
-      if (!snapshot.hasData) {
+        // ⏳ Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // ❌ Pas de profil
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const LoginPage(); // ou page création profil
+        }
+
+        final profile = snapshot.data!;
+
+        // ✅ Nouvelle logique
+        final isAdmin = profile['is_admin'] == true;
+        final isSeller = profile['is_seller'] == true;
+
+        // 🔥 Redirection propre
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (isAdmin) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const AdminDashboardPage(),
+              ),
+            );
+          } else {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const HomePage(),
+              ),
+            );
+          }
+        });
+
+        // écran temporaire pendant redirect
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
-      }
-
-      final profile = snapshot.data!;
-      final role = (profile['role'] ?? 'user').toString().toLowerCase();
-
-      // 🔥 Redirection propre (UNE seule page pour admin)
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (role == 'admin') {
-          Navigator.pushReplacementNamed(context, '/admin');
-        } else if (role == 'seller') {
-          Navigator.pushReplacementNamed(context, '/home'); // ou seller route
-        } else {
-          Navigator.pushReplacementNamed(context, '/home');
-        }
-      });
-
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    },
-  );
-}
+      },
+    );
+  }
 }

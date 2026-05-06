@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../services/feedback_service.dart';
 
 class CreateFeedbackSheet extends StatefulWidget {
   const CreateFeedbackSheet({super.key});
@@ -12,76 +13,131 @@ class CreateFeedbackSheet extends StatefulWidget {
 
 class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
   final supabase = Supabase.instance.client;
+  final feedbackService = FeedbackService();
   final TextEditingController controller = TextEditingController();
   final ImagePicker picker = ImagePicker();
 
-  List<Uint8List> images = []; // ✅ UNE SEULE LISTE
-
+  List<Uint8List> images = [];
   bool loading = false;
 
+  // 🔥 TAG SYSTEM
+  List<Map<String, dynamic>> shops = [];
+
+  // taggedShops = [{id, name}] des shops sélectionnés via suggestion
+  List<Map<String, dynamic>> taggedShops = [];
+
+  bool showSuggestions = false;
+  int cursorPosition = 0;
+
   // =========================
-  // PICK MULTI IMAGES (ONLY)
+  // INIT
   // =========================
-  Future<void> pickImages() async {
-    final picked = await picker.pickMultiImage();
+  @override
+  void initState() {
+    super.initState();
 
-    List<Uint8List> temp = [];
+    controller.addListener(() {
+      final text = controller.text;
+      final selection = controller.selection.baseOffset;
+      if (selection < 0) return;
 
-    for (var img in picked) {
-      temp.add(await img.readAsBytes());
-    }
+      cursorPosition = selection;
 
-    setState(() {
-      images.addAll(temp);
+      final lastAt = text.lastIndexOf('@', selection - 1);
+
+      if (lastAt != -1) {
+        final query = text.substring(lastAt + 1, selection);
+
+        // Si la query est vide ou contient déjà un espace double → pas de suggestion
+        if (query.isEmpty) {
+          fetchShops('');
+          setState(() => showSuggestions = true);
+          return;
+        }
+
+        fetchShops(query);
+        setState(() => showSuggestions = true);
+      } else {
+        setState(() => showSuggestions = false);
+      }
     });
   }
 
   // =========================
-  // UPLOAD IMAGE
+  // FETCH SHOPS
   // =========================
-  Future<String> uploadImage(Uint8List bytes) async {
-    final fileName =
-        '${DateTime.now().millisecondsSinceEpoch}.jpg';
+  Future<void> fetchShops(String query) async {
+    final res = await supabase
+        .from('shops')
+        .select('id, name, avatar')
+        .ilike('name', '%$query%')
+        .limit(5);
 
-    await supabase.storage
-        .from('feedback-images')
-        .uploadBinary(fileName, bytes);
+    setState(() {
+      shops = List<Map<String, dynamic>>.from(res);
+    });
+  }
 
-    return supabase.storage
-        .from('feedback-images')
-        .getPublicUrl(fileName);
+  // =========================
+  // SELECT SHOP → insère @NomShop dans le texte
+  // =========================
+  void selectShop(Map<String, dynamic> shop) {
+    final text = controller.text;
+    final lastAt = text.lastIndexOf('@', cursorPosition - 1);
+
+    final newText = text.substring(0, lastAt) +
+        '@${shop['name']} ' +
+        text.substring(cursorPosition);
+
+    controller.text = newText;
+    controller.selection = TextSelection.fromPosition(
+      TextPosition(offset: lastAt + (shop['name'] as String).length + 2),
+    );
+
+    // Enregistre le shop taggé (sans doublon)
+    if (!taggedShops.any((s) => s['id'] == shop['id'])) {
+      taggedShops.add({'id': shop['id'], 'name': shop['name']});
+    }
+
+    setState(() => showSuggestions = false);
+  }
+
+  // =========================
+  // PICK IMAGES
+  // =========================
+  Future<void> pickImages() async {
+    final picked = await picker.pickMultiImage();
+    final List<Uint8List> temp = [];
+    for (final img in picked) {
+      temp.add(await img.readAsBytes());
+    }
+    setState(() => images.addAll(temp));
   }
 
   // =========================
   // PUBLISH
   // =========================
   Future<void> publish() async {
-    if (controller.text.trim().isEmpty && images.isEmpty) return;
+    final content = controller.text.trim();
+    if (content.isEmpty && images.isEmpty) return;
 
     setState(() => loading = true);
 
-    final user = supabase.auth.currentUser;
+    // Garde seulement les shops encore mentionnés dans le texte
+    final activeShops = taggedShops
+        .where((s) => content.contains('@${s['name']}'))
+        .toList();
 
-    final feedback = await supabase.from('feedbacks').insert({
-      'user_id': user!.id,
-      'content': controller.text.trim(),
-    }).select().single();
+    await feedbackService.createFullFeedback(
+      content: content,
+      images: images,
+      taggedShops: activeShops,
+    );
 
-    final id = feedback['id'];
-
-    // upload all images
-    for (int i = 0; i < images.length; i++) {
-      final url = await uploadImage(images[i]);
-
-      await supabase.from('feedback_images').insert({
-        'feedback_id': id,
-        'image_url': url,
-        'display_order': i,
-      });
+    if (mounted) {
+      setState(() => loading = false);
+      Navigator.pop(context);
     }
-
-    setState(() => loading = false);
-    Navigator.pop(context);
   }
 
   // =========================
@@ -103,7 +159,6 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-
           // HANDLE
           Container(
             width: 50,
@@ -116,7 +171,7 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
 
           const SizedBox(height: 15),
 
-          // TEXT
+          // TEXT FIELD
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -127,15 +182,47 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
               controller: controller,
               maxLines: 4,
               decoration: const InputDecoration(
-                hintText: "Écris ton feedback...",
+                hintText: "Écris ton feedback... (@shop)",
                 border: InputBorder.none,
               ),
             ),
           ),
 
+          // 🔥 SUGGESTIONS
+          if (showSuggestions && shops.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, blurRadius: 6),
+                ],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: shops.length,
+                itemBuilder: (context, i) {
+                  final shop = shops[i];
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage: shop['avatar'] != null
+                          ? NetworkImage(shop['avatar'])
+                          : null,
+                      child: shop['avatar'] == null
+                          ? const Icon(Icons.store)
+                          : null,
+                    ),
+                    title: Text(shop['name']),
+                    onTap: () => selectShop(shop),
+                  );
+                },
+              ),
+            ),
+
           const SizedBox(height: 15),
 
-          // 🖼 IMAGE GRID (MODERNE)
+          // IMAGE GRID
           if (images.isNotEmpty)
             SizedBox(
               height: 120,
@@ -156,25 +243,16 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                           ),
                         ),
                       ),
-
-                      // ❌ REMOVE IMAGE
                       Positioned(
                         right: 10,
                         top: 5,
                         child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              images.removeAt(i);
-                            });
-                          },
+                          onTap: () => setState(() => images.removeAt(i)),
                           child: const CircleAvatar(
                             radius: 12,
                             backgroundColor: Colors.red,
-                            child: Icon(
-                              Icons.close,
-                              size: 14,
-                              color: Colors.white,
-                            ),
+                            child: Icon(Icons.close,
+                                size: 14, color: Colors.white),
                           ),
                         ),
                       ),
@@ -189,8 +267,6 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
           // ACTIONS
           Row(
             children: [
-
-              // 📷 PICK IMAGES
               IconButton(
                 onPressed: pickImages,
                 icon: const Icon(Icons.image),
@@ -201,17 +277,12 @@ class _CreateFeedbackSheetState extends State<CreateFeedbackSheet> {
                   ),
                 ),
               ),
-
               const Spacer(),
-
-              // 🚀 POST
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 0, 2, 105),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
-                  ),
+                      horizontal: 20, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

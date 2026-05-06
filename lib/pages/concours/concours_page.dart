@@ -13,6 +13,7 @@ class ConcoursPage extends StatefulWidget {
 
 class _ConcoursPageState extends State<ConcoursPage> {
   bool isSeller = false;
+  bool isInfluencer = false;
   bool loading = true;
 
   final ScrollController _scrollController = ScrollController();
@@ -48,12 +49,13 @@ class _ConcoursPageState extends State<ConcoursPage> {
       final data =
           await supabase
               .from('users')
-              .select('is_seller')
+              .select('is_seller, is_influencer')
               .eq('id', user.id)
               .single();
 
       setState(() {
         isSeller = data['is_seller'] == true;
+        isInfluencer = data['is_influencer'] == true; 
         loading = false;
       });
     } catch (e) {
@@ -71,7 +73,7 @@ class _ConcoursPageState extends State<ConcoursPage> {
       floatingActionButton:
           loading
               ? null
-              : isSeller
+              : (isSeller || isInfluencer)
               ? FloatingActionButton(
                 onPressed: () {
                   Navigator.push(

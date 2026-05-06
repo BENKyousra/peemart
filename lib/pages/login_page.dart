@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/home_page.dart';
+import '../../auth/auth_gate.dart'; // adapte le chemin
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -67,7 +68,7 @@ Future<void> _login() async {
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const AuthGate()),
         (_) => false,
       );
     }
@@ -110,7 +111,7 @@ Future<void> _signUp() async {
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomePage()),
+        MaterialPageRoute(builder: (_) => const AuthGate()),
         (_) => false,
       );
     }
